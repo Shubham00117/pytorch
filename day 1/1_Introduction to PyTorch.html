@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyTorch for Beginners — Video 1 | CampusX</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg2: #161b22;
+            --bg3: #1c2128;
+            --border: #30363d;
+            --accent: #f97316;
+            --accent2: #fb923c;
+            --blue: #38bdf8;
+            --green: #4ade80;
+            --purple: #a78bfa;
+            --pink: #f472b6;
+            --yellow: #facc15;
+            --red: #f87171;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --code-bg: #0d1117;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        /* HEADER */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 50%, #0d1117 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 48px 40px 36px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: 10%;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(249, 115, 22, 0.15);
+            border: 1px solid rgba(249, 115, 22, 0.4);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 34px;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 300;
+        }
+
+        /* NAV TABS */
+        .nav {
+            display: flex;
+            gap: 4px;
+            padding: 0 40px;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav a {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--muted);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .nav a.active {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* LAYOUT */
+        .container {
+            padding: 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        section {
+            margin-bottom: 52px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .section-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+        }
+
+        .section-dot.blue {
+            background: var(--blue);
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+        }
+
+        .section-dot.green {
+            background: var(--green);
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+        }
+
+        .section-dot.purple {
+            background: var(--purple);
+            box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
+        }
+
+        .section-dot.pink {
+            background: var(--pink);
+            box-shadow: 0 0 8px rgba(244, 114, 182, 0.5);
+        }
+
+        .section-dot.yellow {
+            background: var(--yellow);
+            box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+        }
+
+        h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: #484f57;
+        }
+
+        .card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .card-title.blue {
+            color: var(--blue);
+        }
+
+        .card-title.green {
+            color: var(--green);
+        }
+
+        .card-title.purple {
+            color: var(--purple);
+        }
+
+        .card-title.pink {
+            color: var(--pink);
+        }
+
+        .card-title.yellow {
+            color: var(--yellow);
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* GRID */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        /* TIMELINE */
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent), var(--blue), var(--green));
+            border-radius: 2px;
+        }
+
+        .tl-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .tl-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--bg3);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 6px rgba(249, 115, 22, 0.4);
+        }
+
+        .tl-item:nth-child(2)::before {
+            border-color: var(--blue);
+            box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+        }
+
+        .tl-item:nth-child(3)::before {
+            border-color: var(--purple);
+            box-shadow: 0 0 6px rgba(167, 139, 250, 0.4);
+        }
+
+        .tl-item:nth-child(4)::before {
+            border-color: var(--green);
+            box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+        }
+
+        .tl-year {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .tl-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .tl-body {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .tl-body ul {
+            list-style: none;
+        }
+
+        .tl-body ul li {
+            font-size: 12.5px;
+            color: var(--muted);
+            padding: 3px 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .tl-body ul li::before {
+            content: '›';
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .impact-line {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--green);
+            display: flex;
+            gap: 8px;
+        }
+
+        .impact-line::before {
+            content: '✦';
+        }
+
+        /* CODE BLOCK */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: var(--blue);
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        /* BIG TABLE */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg2);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .data-table thead {
+            background: var(--bg3);
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            color: var(--muted);
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            vertical-align: top;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .data-table td:first-child {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--blue);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .data-table td.aspect {
+            color: var(--text);
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+        }
+
+        .verdict {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .verdict.pt {
+            color: var(--green);
+        }
+
+        .verdict.tf {
+            color: var(--blue);
+        }
+
+        .verdict.tie {
+            color: var(--yellow);
+        }
+
+        /* FEATURE PILLS */
+        .pill-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .pill:hover {
+            border-color: var(--accent);
+        }
+
+        .pill-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(249, 115, 22, 0.1);
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        /* INSIGHT BOX */
+        .insight {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.07), rgba(56, 189, 248, 0.05));
+            border: 1px solid rgba(249, 115, 22, 0.25);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .insight strong {
+            color: var(--accent);
+        }
+
+        /* DIVIDER */
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 40px 0;
+        }
+
+        /* ANCHOR TARGET offset */
+        section[id] {
+            scroll-margin-top: 20px;
+        }
+
+        @media (max-width: 700px) {
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                padding: 32px 20px 24px;
+            }
+
+            .container {
+                padding: 24px 16px;
+            }
+
+            .nav {
+                padding: 0 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="hero">
+        <div class="badge">CampusX · PyTorch for Beginners · Video 1</div>
+        <h1>Introduction to <span>PyTorch</span></h1>
+        <p>History · Core Features · PyTorch vs TensorFlow · Core Modules · Who Uses It</p>
+    </div>
+
+    <!-- NAV -->
+    <nav class="nav">
+        <a href="#journey" class="active">🔥 Journey</a>
+        <a href="#features">⚡ Core Features</a>
+        <a href="#vs">⚖️ vs TensorFlow</a>
+        <a href="#modules">🧩 Core Modules</a>
+        <a href="#ecosystem">📦 Ecosystem</a>
+        <a href="#who">🏢 Who Uses It</a>
+    </nav>
+
+    <div class="container">
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 1. JOURNEY OF PYTORCH -->
+        <!-- ═══════════════════════════════════════ -->
+        <section id="journey">
+            <div class="section-header">
+                <div class="section-dot"></div>
+                <h2>The Journey of PyTorch</h2>
+            </div>
+
+            <div class="grid-2" style="margin-bottom:20px">
+                <div class="card">
+                    <div class="card-title">What is PyTorch?</div>
+                    <p><strong style="color:var(--text)">Open-Source Deep Learning Library</strong> developed by <strong
+                            style="color:var(--accent)">Meta AI</strong> (formerly Facebook AI Research).</p>
+                    <p style="margin-top:8px">Combines <strong style="color:var(--blue)">Python's ease of use</strong>
+                        with the efficiency of the <strong style="color:var(--blue)">Torch</strong> scientific computing
+                        framework — originally built in Lua for high-performance GPU tensor operations.</p>
+                    <p style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow)">
+                        Torch (Lua) + Python → PyTorch</p>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">Why PyTorch Won</div>
+                    <p style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">① Python
+                            Compatibility</span><br>Pythonic interface → intuitive, easy to learn</p>
+                    <p><span style="color:var(--text);font-weight:600">② Dynamic Computation Graph</span><br>Graph is
+                        built at <em>runtime</em> (dynamic) vs TensorFlow's static approach → enables flexible,
+                        debuggable model architectures</p>
+                    <div class="insight" style="margin-top:12px">
+                        <strong>Dynamic Graph Example:</strong> <code>(a + b) × c</code> — graph nodes (a, b, a+b,
+                        result) are created on the fly as operations execute.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="timeline">
+                <div class="tl-item">
+                    <div class="tl-year">2017</div>
+                    <div class="tl-title">PyTorch 0.1 — The Beginning</div>
+                    <div class="tl-body">
+                        <ul>
+                            <li>Introduced the <strong>dynamic computation graph</strong>, enabling flexible model
+                                architectures</li>
+                            <li>Seamless integration with Python libraries (numpy, scipy)</li>
+                        </ul>
+                        <div class="impact-line">Gained popularity among researchers for its intuitive Pythonic
+                            interface. Quickly appeared in research papers.</div>
+                    </div>
+                </div>
+
+                <div class="tl-item">
+                    <div class="tl-year">2018</div>
+                    <div class="tl-title">PyTorch 1.0 — Research → Production</div>
+                    <div class="tl-body">
+                        <ul>
+                            <li>Bridged the gap between research and production environments</li>
+                            <li>Introduced <code>TorchScript</code> for model serialization and optimization</li>
+                            <li>Improved performance with <code>Caffe2</code> integration</li>
+                        </ul>
+                        <div class="impact-line">Enabled smoother transitions of models from research to deployment.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tl-item">
+                    <div class="tl-year">2018–2022</div>
+                    <div class="tl-title">PyTorch 1.x Series — Ecosystem Growth</div>
+                    <div class="tl-body">
+                        <ul>
+                            <li>Support for <strong>distributed training</strong></li>
+                            <li><strong>ONNX</strong> compatibility for interoperability with other frameworks</li>
+                            <li><strong>Quantization</strong> for model compression and efficiency</li>
+                            <li>Expanded ecosystem: <code>torchvision</code> (CV) · <code>torchtext</code> (NLP) ·
+                                <code>torchaudio</code> (Audio)</li>
+                        </ul>
+                        <div class="impact-line">Inspired PyTorch Lightning & Hugging Face Transformers. Strengthened
+                            cloud support.</div>
+                    </div>
+                </div>
+
+                <div class="tl-item">
+                    <div class="tl-year">2023+</div>
+                    <div class="tl-title">PyTorch 2.0 — Performance Era</div>
+                    <div class="tl-body">
+                        <ul>
+                            <li>Significant <strong>performance improvements</strong></li>
+                            <li>Enhanced support for deployment and production-readiness</li>
+                            <li>Optimized for modern hardware (TPUs, custom AI chips)</li>
+                        </ul>
+                        <div class="impact-line">Improved speed and scalability. Better compatibility across deployment
+                            environments.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 2. CORE FEATURES -->
+        <!-- ═══════════════════════════════════════ -->
+        <section id="features">
+            <div class="section-header">
+                <div class="section-dot blue"></div>
+                <h2>Core Features of PyTorch</h2>
+            </div>
+
+            <div class="pill-grid" style="margin-bottom:20px">
+                <div class="pill"><span class="pill-num">01</span> Tensor Computations</div>
+                <div class="pill"><span class="pill-num">02</span> GPU Acceleration</div>
+                <div class="pill"><span class="pill-num">03</span> Dynamic Computation Graph</div>
+                <div class="pill"><span class="pill-num">04</span> Automatic Differentiation</div>
+                <div class="pill"><span class="pill-num">05</span> Distributed Training</div>
+                <div class="pill"><span class="pill-num">06</span> Interoperability with Other Libraries</div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">Tensor Computations</div>
+                    <p>Multi-dimensional arrays similar to NumPy, but with GPU support. Default dtype:
+                        <code>float32</code> (32-bit). Numbers are stored as tensors for efficient math operations.</p>
+                    <div style="margin-top:10px;font-size:12px;color:var(--muted)">
+                        E.g. 1M params × 32-bit = 32M bits = <span style="color:var(--yellow)">4 MB storage</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">GPU Acceleration</div>
+                    <p>Tensors run on NVIDIA CUDA GPUs via <code>torch.cuda</code>. GPU parallelism dramatically speeds
+                        up training of deep neural networks.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title green">Dynamic Computation Graph</div>
+                    <p>Graph is built <em>on-the-fly</em> during the forward pass. Makes debugging easy and enables
+                        dynamic control flow (if/loops) inside models. Core advantage over static-graph frameworks.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title purple">Automatic Differentiation (Autograd)</div>
+                    <p>PyTorch automatically computes gradients of operations for backpropagation. The
+                        <code>torch.autograd</code> engine records operations on tensors to compute gradients for
+                        optimization.</p>
+                    <div
+                        style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">
+                        σ(W<sup>T</sup>x + b) → graph → store</div>
+                </div>
+                <div class="card">
+                    <div class="card-title pink">Distributed Training</div>
+                    <p>Scale training across multiple GPUs/machines with <code>torch.distributed</code>. Enables
+                        parallel computation for large models.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title yellow">Interoperability</div>
+                    <p>Works seamlessly with NumPy, SciPy, and supports ONNX export for cross-framework deployment.
+                        Integrates well with Keras/TF via ONNX bridge.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 3. PYTORCH vs TENSORFLOW -->
+        <!-- ═══════════════════════════════════════ -->
+        <section id="vs">
+            <div class="section-header">
+                <div class="section-dot purple"></div>
+                <h2>PyTorch vs TensorFlow</h2>
+            </div>
+
+            <div class="insight">
+                <strong>Trend:</strong> Google Trends (Past 5 years) shows PyTorch <strong>overtook TensorFlow
+                    ~2021</strong> and continues to dominate in research and academia. TensorFlow still holds strong in
+                enterprise production.
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>🔥 PyTorch</th>
+                        <th>🌊 TensorFlow</th>
+                        <th>Verdict</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="aspect">Programming Language</td>
+                        <td>Primarily Python; deep Pythonic integration</td>
+                        <td>Multi-language: Python, C++, Java, JS, Swift</td>
+                        <td><span class="verdict tie">Depends</span> — PyTorch for Python-centric; TF for multi-language
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="aspect">Ease of Use</td>
+                        <td>Intuitive, Pythonic syntax; very beginner-friendly</td>
+                        <td>TF 2.x improved with Keras, but still more complex</td>
+                        <td><span class="verdict pt">PyTorch Wins</span> — easier to learn and debug</td>
+                    </tr>
+                    <tr>
+                        <td class="aspect">Computation Graph</td>
+                        <td>Dynamic (eager execution by default)</td>
+                        <td>Static (graph compiled then run); TF 2.x adds eager mode</td>
+                        <td><span class="verdict pt">PyTorch Wins</span> — more flexible for research</td>
+                    </tr>
+                    <tr>
+                        <td class="aspect">Deployment & Production</td>
+                        <td>TorchScript, TorchServe, PyTorch Mobile</td>
+                        <td>TF Serving, TF Lite, TF.js — more mature tools</td>
+                        <td><span class="verdict tf">TensorFlow Wins</span> — more comprehensive production tooling</td>
+                    </tr>
+                    <tr>
+                        <td class="aspect">Performance</td>
+                        <td>Competitive; dynamic graphs add slight overhead</td>
+                        <td>Optimized via static graphs and XLA compiler</td>
+                        <td><span class="verdict tie">Tie</span> — both offer high performance at scale</td>
+                    </tr>
+                    <tr>
+                        <td class="aspect">Community & Research</td>
+                        <td>Dominant in academia; preferred by researchers</td>
+                        <td>Large enterprise community</td>
+                        <td><span class="verdict pt">PyTorch Wins</span> — most research papers use PyTorch</td>
+                    </tr>
+                    <tr>
+                        <td class="aspect">Ecosystem Libraries</td>
+                        <td>PyTorch Lightning, Hugging Face, FastAI</td>
+                        <td>Keras (built-in), TF Extended (TFX)</td>
+                        <td><span class="verdict tie">Tie</span> — both have rich ecosystems</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <hr>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 4. CORE MODULES -->
+        <!-- ═══════════════════════════════════════ -->
+        <section id="modules">
+            <div class="section-header">
+                <div class="section-dot green"></div>
+                <h2>PyTorch Core Modules</h2>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>torch</code></td>
+                        <td>Core module — multidimensional arrays (tensors) and mathematical operations</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.autograd</code></td>
+                        <td>Automatic differentiation engine — records operations on tensors to compute gradients for
+                            optimization ★</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.nn</code></td>
+                        <td>Neural networks library — layers, activations, loss functions, and utilities to build deep
+                            learning models ★</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.optim</code></td>
+                        <td>Optimization algorithms: SGD, Adam, RMSprop — used for training neural networks ★</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.utils.data</code></td>
+                        <td>Data handling utilities — <code>Dataset</code> and <code>DataLoader</code> classes for
+                            managing datasets efficiently</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.jit</code></td>
+                        <td>Just-In-Time (JIT) compilation + TorchScript — optimize models and deploy without Python
+                            dependencies</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.distributed</code></td>
+                        <td>Tools for distributed training across multiple GPUs and machines; facilitates parallel
+                            computation</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.cuda</code></td>
+                        <td>NVIDIA CUDA interface — enables GPU acceleration for tensor computations and model training
+                            ★</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.backends</code></td>
+                        <td>Control backend libraries like cuDNN, MKL, and others for performance tuning</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.multiprocessing</code></td>
+                        <td>Parallelism utilities — similar to Python's multiprocessing module but with CUDA tensor
+                            support</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.quantization</code></td>
+                        <td>Model quantization tools — reduce model size and improve inference speed, especially on edge
+                            devices</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.onnx</code></td>
+                        <td>Export PyTorch models to ONNX (Open Neural Network Exchange) format for cross-framework
+                            deployment</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size:11px;color:var(--muted);margin-top:8px;margin-left:4px">★ Most frequently used modules
+                in practice</p>
+        </section>
+
+        <hr>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 5. DOMAIN & ECOSYSTEM LIBRARIES -->
+        <!-- ═══════════════════════════════════════ -->
+        <section id="ecosystem">
+            <div class="section-header">
+                <div class="section-dot pink"></div>
+                <h2>Domain Libraries & Ecosystem</h2>
+            </div>
+
+            <h3 style="font-family:'Syne',sans-serif;font-size:15px;color:var(--text);margin-bottom:12px">PyTorch Domain
+                Libraries</h3>
+            <table class="data-table" style="margin-bottom:24px">
+                <thead>
+                    <tr>
+                        <th>Library</th>
+                        <th>Domain</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>torchvision</td>
+                        <td style="color:var(--accent)">Computer Vision</td>
+                        <td>Datasets, model architectures, and image transformations for CV tasks</td>
+                    </tr>
+                    <tr>
+                        <td>torchtext</td>
+                        <td style="color:var(--blue)">NLP</td>
+                        <td>Tools and datasets for NLP, including data preprocessing and vocabulary management</td>
+                    </tr>
+                    <tr>
+                        <td>torchaudio</td>
+                        <td style="color:var(--green)">Audio</td>
+                        <td>Audio processing — I/O, transforms, and pre-trained models for speech recognition</td>
+                    </tr>
+                    <tr>
+                        <td>torcharrow</td>
+                        <td style="color:var(--purple)">Tabular (Experimental)</td>
+                        <td>Accelerated data loading and preprocessing for tabular and time series data</td>
+                    </tr>
+                    <tr>
+                        <td>torchserve</td>
+                        <td style="color:var(--pink)">Deployment</td>
+                        <td>Model serving library — deploy trained models at scale in production environments</td>
+                    </tr>
+                    <tr>
+                        <td>pytorch_lightning</td>
+                        <td style="color:var(--yellow)">Training</td>
+                        <td>Lightweight wrapper that simplifies the training loop and reduces boilerplate code</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="font-family:'Syne',sans-serif;font-size:15px;color:var(--text);margin-bottom:12px">Popular
+                Ecosystem Libraries</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">Hugging Face Transformers</div>
+                    <p>State-of-the-art pre-trained models for NLP — text classification, translation, question
+                        answering, built on PyTorch.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">FastAI</div>
+                    <p>High-level library that simplifies training fast and accurate neural nets using modern best
+                        practices, built on PyTorch.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title green">PyTorch Geometric</div>
+                    <p>Extension for geometric deep learning — graph neural networks and 3D data processing.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title purple">TorchMetrics</div>
+                    <p>Modular metrics API compatible with PyTorch Lightning; standardized implementations of common
+                        metrics.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title pink">TorchElastic</div>
+                    <p>Enables dynamic scaling of PyTorch distributed training jobs — elasticity in resource management.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-title yellow">Optuna</div>
+                    <p>Automatic hyperparameter optimization framework; integrates well with PyTorch for model tuning.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-title">Catalyst</div>
+                    <p>High-level features for training neural networks, focusing on reproducibility and fast
+                        experimentation.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">Skorch</div>
+                    <p>Scikit-learn compatible wrapper for PyTorch — use PyTorch models with sklearn utilities and APIs.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 6. WHO USES PYTORCH -->
+        <!-- ═══════════════════════════════════════ -->
+        <section id="who">
+            <div class="section-header">
+                <div class="section-dot yellow"></div>
+                <h2>Who Uses PyTorch?</h2>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Products / Services</th>
+                        <th>How they use PyTorch</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color:var(--accent)">Meta (Facebook)</td>
+                        <td>Facebook App, Instagram, Meta AI Research</td>
+                        <td>Created PyTorch; used extensively for computer vision, NLP, and AI research across platforms
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--blue)">Microsoft</td>
+                        <td>Azure ML, Bing Search, Office 365 AI Features</td>
+                        <td>Integrates PyTorch into Azure services; search relevance, productivity tools, and AI
+                            applications</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--green)">Tesla</td>
+                        <td>Autopilot, Full Self-Driving (FSD)</td>
+                        <td>Trains deep neural networks for computer vision and perception tasks in autonomous driving
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--purple)">OpenAI</td>
+                        <td>GPT Models, DALL-E, ChatGPT</td>
+                        <td>Used PyTorch for training large-scale language models and generative models</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--pink)">Uber</td>
+                        <td>Ride-Hailing Platform, Uber Eats</td>
+                        <td>Demand forecasting, route optimization; developed Pyro (probabilistic programming language)
+                            on PyTorch</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="insight" style="margin-top:20px">
+                <strong>Course Roadmap:</strong> Fundamentals (Tensors · Computation · AutoGrad) → Neural Networks (NN
+                building with torch.nn)
+            </div>
+        </section>
+
+    </div><!-- /container -->
+
+    <div
+        style="text-align:center;padding:24px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;border-top:1px solid var(--border)">
+        PyTorch for Beginners · Video 1 · CampusX &nbsp;|&nbsp; Notes generated from lecture screenshots
+    </div>
+
+</body>
+
+</html>
