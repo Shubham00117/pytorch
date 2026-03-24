@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tensors in PyTorch — CampusX</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --surface2: #1a1e2a;
+            --border: #252a38;
+            --accent: #e8643a;
+            --accent2: #5c9eff;
+            --accent3: #4ecb8c;
+            --accent4: #c47aff;
+            --text: #dde2f0;
+            --muted: #7a82a0;
+            --code-bg: #0b0d12;
+            --tag-bg: rgba(92, 158, 255, 0.12);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg, #0d0f14 0%, #151928 60%, #1a1230 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 48px 40px 36px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(232, 100, 58, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header-label {
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        header h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.2;
+            background: linear-gradient(90deg, #fff 0%, #a0b4d8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: var(--tag-bg);
+            border: 1px solid rgba(92, 158, 255, 0.2);
+            color: var(--accent2);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.orange {
+            background: rgba(232, 100, 58, 0.12);
+            border-color: rgba(232, 100, 58, 0.25);
+            color: var(--accent);
+        }
+
+        .badge.green {
+            background: rgba(78, 203, 140, 0.12);
+            border-color: rgba(78, 203, 140, 0.25);
+            color: var(--accent3);
+        }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        /* ── Section ── */
+        .section {
+            margin-bottom: 40px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 22px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background: #1f2435;
+        }
+
+        .section-number {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .section-number.blue {
+            background: var(--accent2);
+        }
+
+        .section-number.green {
+            background: var(--accent3);
+        }
+
+        .section-number.purple {
+            background: var(--accent4);
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            flex: 1;
+        }
+
+        .toggle-icon {
+            color: var(--muted);
+            font-size: 18px;
+            transition: transform 0.25s;
+        }
+
+        .section-body {
+            padding: 22px;
+        }
+
+        .collapsed .section-body {
+            display: none;
+        }
+
+        .collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* ── Concept cards ── */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .concept-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .concept-card .label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--accent2);
+            margin-bottom: 4px;
+        }
+
+        .concept-card .value {
+            font-size: 13px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .concept-card .desc {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+            font-family: 'Syne', sans-serif;
+        }
+
+        /* ── Code blocks ── */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 18px;
+            overflow-x: auto;
+            margin: 12px 0;
+            position: relative;
+        }
+
+        pre code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #c9d1e9;
+        }
+
+        .comment {
+            color: #4e5a72;
+        }
+
+        .keyword {
+            color: #c47aff;
+        }
+
+        .fn {
+            color: #5c9eff;
+        }
+
+        .str {
+            color: #4ecb8c;
+        }
+
+        .num {
+            color: #e8b86a;
+        }
+
+        .out {
+            color: #8a9bbf;
+            font-style: italic;
+        }
+
+        /* ── Tables ── */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: var(--surface2);
+            color: var(--accent2);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 8px 14px;
+            border-bottom: 1px solid rgba(37, 42, 56, 0.6);
+            color: var(--text);
+            vertical-align: top;
+        }
+
+        td code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent3);
+            background: rgba(78, 203, 140, 0.08);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* ── Info / note boxes ── */
+        .info-box {
+            border-left: 3px solid var(--accent2);
+            background: rgba(92, 158, 255, 0.06);
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .info-box.orange {
+            border-color: var(--accent);
+            background: rgba(232, 100, 58, 0.07);
+        }
+
+        .info-box.green {
+            border-color: var(--accent3);
+            background: rgba(78, 203, 140, 0.06);
+        }
+
+        .info-box.purple {
+            border-color: var(--accent4);
+            background: rgba(196, 122, 255, 0.07);
+        }
+
+        .info-box strong {
+            color: inherit;
+        }
+
+        /* ── Two-column ── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 12px 0;
+        }
+
+        @media (max-width: 640px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Sub-section label ── */
+        .sub-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin: 20px 0 8px;
+        }
+
+        .sub-label:first-child {
+            margin-top: 0;
+        }
+
+        p {
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-bottom: 8px;
+        }
+
+        li {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        li span.hl {
+            color: var(--accent2);
+            font-weight: 600;
+        }
+
+        /* ── TOC ── */
+        .toc {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 36px;
+        }
+
+        .toc-title {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 6px;
+        }
+
+        .toc a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 13px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+
+        .toc a:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent2);
+        }
+
+        .toc-num {
+            color: var(--muted);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-label">CampusX · Video 2</div>
+        <h1>Tensors in PyTorch</h1>
+        <div class="header-meta">
+            <span class="badge orange">PyTorch 2.5.1</span>
+            <span class="badge">CUDA · Tesla T4</span>
+            <span class="badge green">Complete Notes</span>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- TOC -->
+        <div class="toc">
+            <div class="toc-title">Contents</div>
+            <div class="toc-grid">
+                <a href="#s1"><span class="toc-num">01</span> What are Tensors</a>
+                <a href="#s2"><span class="toc-num">02</span> Why Tensors are Useful</a>
+                <a href="#s3"><span class="toc-num">03</span> Creating Tensors</a>
+                <a href="#s4"><span class="toc-num">04</span> Tensor Shapes & dtypes</a>
+                <a href="#s5"><span class="toc-num">05</span> Scalar Operations</a>
+                <a href="#s6"><span class="toc-num">06</span> Element-wise Operations</a>
+                <a href="#s7"><span class="toc-num">07</span> Reduction Operations</a>
+                <a href="#s8"><span class="toc-num">08</span> Matrix Operations</a>
+                <a href="#s9"><span class="toc-num">09</span> Comparison & Special Fns</a>
+                <a href="#s10"><span class="toc-num">10</span> Inplace Operations</a>
+                <a href="#s11"><span class="toc-num">11</span> Copying Tensors</a>
+                <a href="#s12"><span class="toc-num">12</span> GPU Operations</a>
+                <a href="#s13"><span class="toc-num">13</span> Reshaping Tensors</a>
+                <a href="#s14"><span class="toc-num">14</span> NumPy ↔ PyTorch</a>
+            </div>
+        </div>
+
+        <!-- S1: What are Tensors -->
+        <div class="section" id="s1">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number">1</div>
+                <div class="section-title">What are Tensors</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <p>Tensors are multi-dimensional arrays — the fundamental data structure in PyTorch. Very similar to
+                    NumPy arrays but with GPU support.</p>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <div class="label">Scalar · 0D</div>
+                        <div class="value">42</div>
+                        <div class="desc">Single number</div>
+                    </div>
+                    <div class="concept-card">
+                        <div class="label">Vector · 1D</div>
+                        <div class="value">[0.12, -0.84, 0.33]</div>
+                        <div class="desc">List of numbers. Word embeddings (Word2Vec, GloVe)</div>
+                    </div>
+                    <div class="concept-card">
+                        <div class="label">Matrix · 2D</div>
+                        <div class="value">[[0,255,128],<br>[34,90,180]]</div>
+                        <div class="desc">Tabular / grayscale image data</div>
+                    </div>
+                    <div class="concept-card">
+                        <div class="label">3D Tensor</div>
+                        <div class="value">Shape [256,256,3]</div>
+                        <div class="desc">RGB image (W × H × Channels)</div>
+                    </div>
+                    <div class="concept-card">
+                        <div class="label">4D Tensor</div>
+                        <div class="value">Shape [32,128,128,3]</div>
+                        <div class="desc">Batch of RGB images</div>
+                    </div>
+                    <div class="concept-card">
+                        <div class="label">5D Tensor</div>
+                        <div class="value">Shape [10,16,64,64,3]</div>
+                        <div class="desc">Video clips (clips × frames × W × H × C)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S2: Why Tensors -->
+        <div class="section" id="s2">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number blue">2</div>
+                <div class="section-title">Why Tensors are Useful & Where They're Used</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <div class="two-col">
+                    <div>
+                        <div class="sub-label">Why Useful</div>
+                        <ul>
+                            <li><span class="hl">Math Operations</span> — add, multiply, dot product for neural nets
+                            </li>
+                            <li><span class="hl">Real-world Data</span> — images, audio, video, text all represented as
+                                tensors</li>
+                            <li><span class="hl">GPU Acceleration</span> — optimized for CUDA/TPUs, parallel computation
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="sub-label">In Deep Learning</div>
+                        <ul>
+                            <li><span class="hl">Data Storage</span> — training data stored as tensors</li>
+                            <li><span class="hl">Weights & Biases</span> — learnable parameters are tensors</li>
+                            <li><span class="hl">Matrix Ops</span> — matmul, dot product, broadcasting</li>
+                            <li><span class="hl">Training</span> — forward pass tensors flow through; gradients computed
+                                in backward pass</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="info-box green">Activation function formula: <strong>activation(W·x + b)</strong> — W, x, b
+                    are all tensors.</div>
+            </div>
+        </div>
+
+        <!-- S3: Creating Tensors -->
+        <div class="section" id="s3">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number green">3</div>
+                <div class="section-title">Creating Tensors</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <div class="sub-label">Setup</div>
+                <pre><code><span class="keyword">import</span> torch
+<span class="fn">print</span>(torch.__version__)  <span class="comment"># 2.5.1+cu121</span>
+
+<span class="keyword">if</span> torch.cuda.is_available():
+    <span class="fn">print</span>(torch.cuda.get_device_name(<span class="num">0</span>))  <span class="comment"># Tesla T4</span></code></pre>
+
+                <div class="sub-label">Construction Methods</div>
+                <pre><code><span class="comment"># Uninitialized (garbage values)</span>
+a = torch.<span class="fn">empty</span>(<span class="num">2</span>, <span class="num">3</span>)              <span class="comment"># type: torch.Tensor</span>
+
+<span class="comment"># Filled with constant values</span>
+torch.<span class="fn">zeros</span>(<span class="num">2</span>, <span class="num">3</span>)                 <span class="comment"># all 0.0</span>
+torch.<span class="fn">ones</span>(<span class="num">2</span>, <span class="num">3</span>)                  <span class="comment"># all 1.0</span>
+torch.<span class="fn">full</span>((<span class="num">3</span>, <span class="num">3</span>), <span class="num">5</span>)             <span class="comment"># all 5</span>
+
+<span class="comment"># Random</span>
+torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)                  <span class="comment"># uniform [0, 1)</span>
+torch.<span class="fn">randn</span>(<span class="num">2</span>, <span class="num">3</span>)                 <span class="comment"># standard normal</span>
+torch.<span class="fn">randint</span>(size=(<span class="num">2</span>,<span class="num">3</span>), low=<span class="num">0</span>, high=<span class="num">10</span>)
+
+<span class="comment"># Reproducibility</span>
+torch.<span class="fn">manual_seed</span>(<span class="num">100</span>)
+torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)   <span class="comment"># same result every time with same seed</span>
+
+<span class="comment"># From data</span>
+torch.<span class="fn">tensor</span>([[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>], [<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>]])   <span class="comment"># tensor([[1,2,3],[4,5,6]])</span>
+
+<span class="comment"># Ranges & sequences</span>
+torch.<span class="fn">arange</span>(<span class="num">0</span>, <span class="num">10</span>, <span class="num">2</span>)             <span class="comment"># tensor([0,2,4,6,8])</span>
+torch.<span class="fn">linspace</span>(<span class="num">0</span>, <span class="num">10</span>, <span class="num">10</span>)          <span class="comment"># 10 evenly spaced vals</span>
+torch.<span class="fn">eye</span>(<span class="num">5</span>)                        <span class="comment"># 5×5 identity matrix</span></code></pre>
+            </div>
+        </div>
+
+        <!-- S4: Shapes & dtypes -->
+        <div class="section" id="s4">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number purple">4</div>
+                <div class="section-title">Tensor Shapes & Data Types</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <div class="sub-label">Shapes</div>
+                <pre><code>x = torch.<span class="fn">tensor</span>([[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>],[<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>]])
+x.shape                              <span class="comment"># torch.Size([2, 3])</span>
+
+<span class="comment"># Create new tensors with same shape as x</span>
+torch.<span class="fn">empty_like</span>(x)                  <span class="comment"># uninitialized, same shape</span>
+torch.<span class="fn">zeros_like</span>(x)                  <span class="comment"># all zeros</span>
+torch.<span class="fn">ones_like</span>(x)                   <span class="comment"># all ones</span>
+
+<span class="comment"># Check & assign dtype</span>
+x.dtype                              <span class="comment"># torch.int64 (default for int)</span>
+torch.<span class="fn">tensor</span>([<span class="num">1.0</span>,<span class="num">2.0</span>,<span class="num">3.0</span>], dtype=torch.int32)
+
+<span class="comment"># Convert dtype</span>
+x.to(torch.float32)</code></pre>
+
+                <div class="sub-label">Common Data Types</div>
+                <div class="table-wrap">
+                    <table>
+                        <tr>
+                            <th>Data Type</th>
+                            <th>Dtype</th>
+                            <th>Use Case</th>
+                        </tr>
+                        <tr>
+                            <td>32-bit Float</td>
+                            <td><code>torch.float32</code></td>
+                            <td>Default for most DL tasks</td>
+                        </tr>
+                        <tr>
+                            <td>16-bit Float</td>
+                            <td><code>torch.float16</code></td>
+                            <td>Mixed-precision training (GPU)</td>
+                        </tr>
+                        <tr>
+                            <td>BFloat16</td>
+                            <td><code>torch.bfloat16</code></td>
+                            <td>Mixed-precision on TPUs</td>
+                        </tr>
+                        <tr>
+                            <td>64-bit Int</td>
+                            <td><code>torch.int64</code></td>
+                            <td>Default for integer tensors</td>
+                        </tr>
+                        <tr>
+                            <td>32-bit Int</td>
+                            <td><code>torch.int32</code></td>
+                            <td>Indexing, general tasks</td>
+                        </tr>
+                        <tr>
+                            <td>8-bit Uint</td>
+                            <td><code>torch.uint8</code></td>
+                            <td>Image pixel data (0–255)</td>
+                        </tr>
+                        <tr>
+                            <td>Boolean</td>
+                            <td><code>torch.bool</code></td>
+                            <td>Masks, logical ops</td>
+                        </tr>
+                        <tr>
+                            <td>Quantized Int</td>
+                            <td><code>torch.qint8</code></td>
+                            <td>Quantized model inference</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- S5: Scalar Operations -->
+        <div class="section" id="s5">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number">5</div>
+                <div class="section-title">Scalar Operations (Broadcast)</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <p>A scalar is applied to <em>every element</em> of the tensor.</p>
+                <pre><code>x = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">2</span>)
+<span class="comment"># tensor([[0.9594, 0.1334], [0.8591, 0.6639]])</span>
+
+x + <span class="num">2</span>          <span class="comment"># addition    → [[2.9594, 2.1334], ...]</span>
+x - <span class="num">2</span>          <span class="comment"># subtraction</span>
+x * <span class="num">3</span>          <span class="comment"># multiplication</span>
+x / <span class="num">3</span>          <span class="comment"># division</span>
+(x * <span class="num">100</span>)//<span class="num">3</span>   <span class="comment"># integer division  → [[31., 4.], [28., 22.]]</span>
+((x*<span class="num">100</span>)//<span class="num">3</span>)%<span class="num">2</span> <span class="comment"># modulo            → [[1., 0.], [0., 0.]]</span>
+x**<span class="num">2</span>           <span class="comment"># power             → [[0.9205, 0.0178], ...]</span></code></pre>
+            </div>
+        </div>
+
+        <!-- S6: Element-wise -->
+        <div class="section" id="s6">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number blue">6</div>
+                <div class="section-title">Element-wise & Unary Operations</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <div class="sub-label">Element-wise (same shape tensors)</div>
+                <pre><code>a = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)
+b = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)
+
+a + b   <span class="comment"># element-wise add</span>
+a - b   <span class="comment"># subtract</span>
+a * b   <span class="comment"># multiply  (NOT matrix multiply!)</span>
+a / b   <span class="comment"># divide</span>
+a ** b  <span class="comment"># power</span>
+a % b   <span class="comment"># modulo</span></code></pre>
+
+                <div class="sub-label">Unary Operations</div>
+                <pre><code>c = torch.<span class="fn">tensor</span>([<span class="num">1</span>, <span class="num">-2</span>, <span class="num">3</span>, <span class="num">-4</span>])
+
+torch.<span class="fn">abs</span>(c)   <span class="comment"># tensor([1, 2, 3, 4])</span>
+torch.<span class="fn">neg</span>(c)   <span class="comment"># tensor([-1, 2, -3, 4])</span></code></pre>
+
+                <div class="sub-label">Rounding Operations</div>
+                <pre><code>d = torch.<span class="fn">tensor</span>([<span class="num">1.9</span>, <span class="num">2.3</span>, <span class="num">3.7</span>, <span class="num">4.4</span>])
+
+torch.<span class="fn">round</span>(d)              <span class="comment"># [2., 2., 4., 4.]</span>
+torch.<span class="fn">ceil</span>(d)               <span class="comment"># [2., 3., 4., 5.]</span>
+torch.<span class="fn">floor</span>(d)              <span class="comment"># [1., 2., 3., 4.]</span>
+torch.<span class="fn">clamp</span>(d, min=<span class="num">2</span>, max=<span class="num">3</span>) <span class="comment"># [2.0, 2.3, 3.0, 3.0]</span></code></pre>
+                <div class="info-box">clamp clips values to [min, max] range — useful for gradient clipping.</div>
+            </div>
+        </div>
+
+        <!-- S7: Reduction -->
+        <div class="section" id="s7">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number green">7</div>
+                <div class="section-title">Reduction Operations</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <pre><code>e = torch.<span class="fn">randint</span>(size=(<span class="num">2</span>,<span class="num">3</span>), low=<span class="num">0</span>, high=<span class="num">10</span>)
+<span class="comment"># e.g. tensor([[5,5,8],[8,5,0]])</span>
+
+torch.<span class="fn">sum</span>(e)              <span class="comment"># total sum of all elements</span>
+torch.<span class="fn">sum</span>(e, dim=<span class="num">0</span>)       <span class="comment"># sum along columns (↓) → tensor([13, 10, 8])</span>
+torch.<span class="fn">sum</span>(e, dim=<span class="num">1</span>)       <span class="comment"># sum along rows    (→) → tensor([18, 13])</span>
+
+torch.<span class="fn">mean</span>(e.<span class="fn">float</span>())     <span class="comment"># overall mean</span>
+torch.<span class="fn">mean</span>(e.<span class="fn">float</span>(), dim=<span class="num">0</span>) <span class="comment"># mean per column → [4., 4., 7.]</span>
+
+torch.<span class="fn">median</span>(e)           <span class="comment"># tensor(5.)</span>
+torch.<span class="fn">max</span>(e)              <span class="comment"># max value</span>
+torch.<span class="fn">min</span>(e)              <span class="comment"># min value</span>
+torch.<span class="fn">prod</span>(e)             <span class="comment"># product of all  → tensor(3780.)</span>
+torch.<span class="fn">std</span>(e.<span class="fn">float</span>())      <span class="comment"># std deviation   → tensor(3.0332)</span>
+torch.<span class="fn">var</span>(e.<span class="fn">float</span>())      <span class="comment"># variance        → tensor(9.2000)</span>
+
+torch.<span class="fn">argmax</span>(e)           <span class="comment"># index of max (flattened) → tensor(2)</span>
+torch.<span class="fn">argmin</span>(e)           <span class="comment"># index of min (flattened) → tensor(0)</span></code></pre>
+                <div class="info-box orange"><strong>dim=0</strong> → operate across rows (↓ columns).
+                    <strong>dim=1</strong> → operate across columns (→ rows).</div>
+            </div>
+        </div>
+
+        <!-- S8: Matrix Ops -->
+        <div class="section" id="s8">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number purple">8</div>
+                <div class="section-title">Matrix Operations</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <pre><code>f = torch.<span class="fn">randint</span>(size=(<span class="num">2</span>,<span class="num">3</span>), low=<span class="num">0</span>, high=<span class="num">10</span>)
+g = torch.<span class="fn">randint</span>(size=(<span class="num">3</span>,<span class="num">2</span>), low=<span class="num">0</span>, high=<span class="num">10</span>)
+
+<span class="comment"># Matrix multiplication  (2×3 @ 3×2 = 2×2)</span>
+torch.<span class="fn">matmul</span>(f, g)         <span class="comment"># tensor([[63,73],[79,88]])</span>
+
+<span class="comment"># Dot product (1D vectors)</span>
+v1 = torch.<span class="fn">tensor</span>([<span class="num">1</span>,<span class="num">2</span>])
+v2 = torch.<span class="fn">tensor</span>([<span class="num">3</span>,<span class="num">4</span>])
+torch.<span class="fn">dot</span>(v1, v2)          <span class="comment"># 1×3 + 2×4 = 11</span>
+
+<span class="comment"># Transpose  (swaps dim 0 and 1)</span>
+torch.<span class="fn">transpose</span>(f, <span class="num">0</span>, <span class="num">1</span>)   <span class="comment"># (2×3) → (3×2)</span>
+
+<span class="comment"># Determinant & Inverse  (needs square float matrix)</span>
+h = torch.<span class="fn">randint</span>(size=(<span class="num">3</span>,<span class="num">3</span>), low=<span class="num">0</span>, high=<span class="num">10</span>, dtype=torch.float32)
+
+torch.<span class="fn">det</span>(h)              <span class="comment"># tensor(224.)</span>
+torch.<span class="fn">inverse</span>(h)          <span class="comment"># 3×3 inverse matrix</span></code></pre>
+            </div>
+        </div>
+
+        <!-- S9: Comparison & Special -->
+        <div class="section" id="s9">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number">9</div>
+                <div class="section-title">Comparison & Special Functions</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <div class="sub-label">Comparison (element-wise → bool tensor)</div>
+                <pre><code>i = torch.<span class="fn">randint</span>(size=(<span class="num">2</span>,<span class="num">3</span>), low=<span class="num">0</span>, high=<span class="num">10</span>)
+j = torch.<span class="fn">randint</span>(size=(<span class="num">2</span>,<span class="num">3</span>), low=<span class="num">0</span>, high=<span class="num">10</span>)
+
+i > j   <span class="comment"># greater than</span>
+i < j   <span class="comment"># less than</span>
+i == j  <span class="comment"># equal to</span>
+i != j  <span class="comment"># not equal to</span>
+i >= j  <span class="comment"># greater than or equal</span>
+i <= j  <span class="comment"># less than or equal</span>
+<span class="comment"># Returns tensor([[False, True, ...], ...])</span></code></pre>
+
+                <div class="sub-label">Special / Activation Functions</div>
+                <pre><code>k = torch.<span class="fn">randint</span>(size=(<span class="num">2</span>,<span class="num">3</span>), low=<span class="num">1</span>, high=<span class="num">10</span>, dtype=torch.float32)
+
+torch.<span class="fn">log</span>(k)              <span class="comment"># natural log (ln)</span>
+torch.<span class="fn">exp</span>(k)              <span class="comment"># e^x</span>
+torch.<span class="fn">sqrt</span>(k)             <span class="comment"># square root</span>
+
+<span class="comment"># Activation functions</span>
+torch.<span class="fn">sigmoid</span>(k)          <span class="comment"># σ(x) = 1/(1+e^-x) → [0,1]</span>
+torch.<span class="fn">softmax</span>(k, dim=<span class="num">0</span>)  <span class="comment"># probabilities along dim (sum=1)</span>
+torch.<span class="fn">relu</span>(k)             <span class="comment"># max(0, x)</span></code></pre>
+            </div>
+        </div>
+
+        <!-- S10: Inplace -->
+        <div class="section" id="s10">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number blue">10</div>
+                <div class="section-title">Inplace Operations</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <div class="info-box purple"><strong>Rule:</strong> Methods ending with <code>_</code> modify the tensor
+                    <em>in-place</em> — no new tensor is created, saving memory.</div>
+                <pre><code>m = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)
+n = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)
+
+<span class="comment"># Out-of-place (creates new tensor)</span>
+m + n                   <span class="comment"># m is unchanged</span>
+
+<span class="comment"># Inplace (modifies m directly)</span>
+m.<span class="fn">add_</span>(n)               <span class="comment"># m = m + n</span>
+m.<span class="fn">relu_</span>()               <span class="comment"># m = relu(m)</span>
+m.<span class="fn">mul_</span>(<span class="num">2</span>)               <span class="comment"># m = m * 2</span></code></pre>
+            </div>
+        </div>
+
+        <!-- S11: Copying -->
+        <div class="section" id="s11">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number green">11</div>
+                <div class="section-title">Copying a Tensor</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <div class="two-col">
+                    <div>
+                        <div class="sub-label">⚠ Shallow Copy (shared memory)</div>
+                        <pre><code>a = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)
+b = a          <span class="comment"># same data!</span>
+
+a[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">0</span>
+<span class="comment"># b[0][0] is also 0 ← danger!</span>
+<span class="comment"># id(a) ≠ id(b) but same storage</span></code></pre>
+                    </div>
+                    <div>
+                        <div class="sub-label">✓ Deep Copy (independent)</div>
+                        <pre><code>b = a.<span class="fn">clone</span>()  <span class="comment"># new memory</span>
+
+a[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">10</span>
+<span class="comment"># b is unchanged ✓</span>
+<span class="comment"># Different storage locations</span></code></pre>
+                    </div>
+                </div>
+                <div class="info-box orange">Always use <code>.clone()</code> when you want an independent copy that
+                    won't be affected by changes to the original.</div>
+            </div>
+        </div>
+
+        <!-- S12: GPU -->
+        <div class="section" id="s12">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number purple">12</div>
+                <div class="section-title">Tensor Operations on GPU</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <pre><code>torch.cuda.<span class="fn">is_available</span>()         <span class="comment"># True</span>
+device = torch.<span class="fn">device</span>(<span class="str">'cuda'</span>)
+
+<span class="comment"># Create tensor directly on GPU</span>
+torch.<span class="fn">rand</span>((<span class="num">2</span>,<span class="num">3</span>), device=device)
+<span class="comment"># tensor([[...]], device='cuda:0')</span>
+
+<span class="comment"># Move existing CPU tensor to GPU</span>
+a = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>)
+a.<span class="fn">to</span>(device)
+<span class="comment"># tensor([[...]], device='cuda:0')</span></code></pre>
+
+                <div class="sub-label">GPU vs CPU Benchmark (10000×10000 matmul)</div>
+                <pre><code><span class="keyword">import</span> time
+
+size = <span class="num">10000</span>
+cpu1, cpu2 = torch.<span class="fn">randn</span>(size,size), torch.<span class="fn">randn</span>(size,size)
+
+t = time.<span class="fn">time</span>()
+torch.<span class="fn">matmul</span>(cpu1, cpu2)
+cpu_time = time.<span class="fn">time</span>() - t        <span class="comment"># ~17.7 seconds</span>
+
+gpu1 = cpu1.<span class="fn">to</span>(<span class="str">'cuda'</span>); gpu2 = cpu2.<span class="fn">to</span>(<span class="str">'cuda'</span>)
+t = time.<span class="fn">time</span>()
+torch.<span class="fn">matmul</span>(gpu1, gpu2)
+torch.cuda.<span class="fn">synchronize</span>()
+gpu_time = time.<span class="fn">time</span>() - t        <span class="comment"># ~0.57 seconds</span>
+
+<span class="fn">print</span>(cpu_time / gpu_time)         <span class="comment"># Speedup: ~31×</span></code></pre>
+                <div class="info-box green">GPU is ~31× faster for large matrix multiplications — critical for deep
+                    learning training.</div>
+            </div>
+        </div>
+
+        <!-- S13: Reshaping -->
+        <div class="section" id="s13">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number">13</div>
+                <div class="section-title">Reshaping Tensors</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <pre><code>a = torch.<span class="fn">ones</span>(<span class="num">2</span>, <span class="num">2</span>, <span class="num">2</span>)    <span class="comment"># shape [2,2,2] — 8 elements</span>
+
+<span class="comment"># reshape — change shape (total elements must match)</span>
+a.<span class="fn">reshape</span>(<span class="num">2</span>,<span class="num">2</span>,<span class="num">2</span>,<span class="num">2</span>)          <span class="comment"># ← wait, needs matching size</span>
+a.<span class="fn">reshape</span>(<span class="num">4</span>, <span class="num">2</span>)             <span class="comment"># → shape [4, 2]</span>
+
+<span class="comment"># flatten — collapses all dims to 1D</span>
+a.<span class="fn">flatten</span>()                 <span class="comment"># tensor([1.,1.,1.,1.,1.,1.,1.,1.])</span>
+
+<span class="comment"># permute — reorder dimensions</span>
+b = torch.<span class="fn">rand</span>(<span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>)     <span class="comment"># shape [2, 3, 4]</span>
+b.<span class="fn">permute</span>(<span class="num">2</span>, <span class="num">0</span>, <span class="num">1</span>).shape    <span class="comment"># torch.Size([4, 2, 3])</span>
+b.<span class="fn">permute</span>(<span class="num">2</span>, <span class="num">1</span>, <span class="num">0</span>).shape    <span class="comment"># torch.Size([4, 3, 2])</span>
+
+<span class="comment"># unsqueeze — adds a dimension of size 1</span>
+c = torch.<span class="fn">rand</span>(<span class="num">226</span>, <span class="num">226</span>, <span class="num">3</span>)  <span class="comment"># single image [H,W,C]</span>
+c.<span class="fn">unsqueeze</span>(<span class="num">0</span>).shape         <span class="comment"># torch.Size([1,226,226,3]) — batch of 1</span>
+
+<span class="comment"># squeeze — removes dimensions of size 1</span>
+d = torch.<span class="fn">rand</span>(<span class="num">1</span>, <span class="num">20</span>)
+d.<span class="fn">squeeze</span>(<span class="num">0</span>).shape           <span class="comment"># torch.Size([20])</span></code></pre>
+
+                <div class="table-wrap">
+                    <table>
+                        <tr>
+                            <th>Method</th>
+                            <th>What it does</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td><code>reshape()</code></td>
+                            <td>Change shape, same data</td>
+                            <td>[8] → [2,4]</td>
+                        </tr>
+                        <tr>
+                            <td><code>flatten()</code></td>
+                            <td>Collapse all dims → 1D</td>
+                            <td>[2,3,4] → [24]</td>
+                        </tr>
+                        <tr>
+                            <td><code>permute()</code></td>
+                            <td>Reorder dimensions</td>
+                            <td>[2,3,4] → [4,2,3]</td>
+                        </tr>
+                        <tr>
+                            <td><code>unsqueeze(dim)</code></td>
+                            <td>Insert dim of size 1</td>
+                            <td>[226,226,3] → [1,226,226,3]</td>
+                        </tr>
+                        <tr>
+                            <td><code>squeeze(dim)</code></td>
+                            <td>Remove dim of size 1</td>
+                            <td>[1,20] → [20]</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- S14: NumPy -->
+        <div class="section" id="s14">
+            <div class="section-header" onclick="toggle(this)">
+                <div class="section-number blue">14</div>
+                <div class="section-title">NumPy ↔ PyTorch</div>
+                <div class="toggle-icon">▾</div>
+            </div>
+            <div class="section-body">
+                <pre><code><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Tensor → NumPy</span>
+a = torch.<span class="fn">tensor</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
+b = a.<span class="fn">numpy</span>()               <span class="comment"># array([1, 2, 3])</span>
+<span class="fn">type</span>(b)                      <span class="comment"># numpy.ndarray</span>
+
+<span class="comment"># NumPy → Tensor</span>
+c = np.<span class="fn">array</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
+torch.<span class="fn">from_numpy</span>(c)          <span class="comment"># tensor([1, 2, 3])</span></code></pre>
+                <div class="info-box orange"><strong>Note:</strong> On CPU, <code>.numpy()</code> shares memory with the
+                    tensor. Modifying one modifies the other. Use <code>.clone().numpy()</code> to avoid this.</div>
+            </div>
+        </div>
+
+    </div><!-- /container -->
+
+    <script>
+        function toggle(header) {
+            const section = header.closest('.section');
+            section.classList.toggle('collapsed');
+        }
+    </script>
+</body>
+
+</html>
