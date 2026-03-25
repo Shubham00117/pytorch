@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building ANN with PyTorch | Fashion MNIST | CampusX Video 7</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --surface2: #1a1e2a;
+            --border: #252836;
+            --accent: #7c5cbf;
+            --accent2: #3ecfb2;
+            --accent3: #f7c948;
+            --accent4: #e05c7a;
+            --text: #e2e4ef;
+            --muted: #6b7094;
+            --code-bg: #0a0c12;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* Background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(124, 92, 191, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124, 92, 191, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent2);
+            border: 1px solid var(--accent2);
+            padding: 4px 14px;
+            border-radius: 2px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(26px, 5vw, 40px);
+            font-weight: 800;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #c4b5f7 0%, var(--accent2) 60%, var(--accent3) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Pipeline strip */
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 48px;
+        }
+
+        .pipe-step {
+            flex: 1;
+            min-width: 110px;
+            padding: 14px 10px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            border-right: 1px solid var(--border);
+            position: relative;
+            cursor: default;
+            transition: background 0.2s;
+        }
+
+        .pipe-step:last-child {
+            border-right: none;
+        }
+
+        .pipe-step:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .pipe-num {
+            display: block;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+            font-family: 'Syne', sans-serif;
+        }
+
+        /* Section */
+        section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            background: rgba(124, 92, 191, 0.12);
+            border: 1px solid rgba(124, 92, 191, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .divider {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+        }
+
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 22px 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        /* Info grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .info-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 4px;
+        }
+
+        .info-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent3);
+        }
+
+        /* Code block */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px;
+            padding: 18px 20px;
+            overflow-x: auto;
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.75;
+            color: #c8cfe8;
+        }
+
+        .kw {
+            color: #7c5cbf;
+        }
+
+        .fn {
+            color: #3ecfb2;
+        }
+
+        .str {
+            color: #f7c948;
+        }
+
+        .cm {
+            color: #454d6b;
+            font-style: italic;
+        }
+
+        .num {
+            color: #e05c7a;
+        }
+
+        .cls {
+            color: #f0a05a;
+        }
+
+        /* Inline code */
+        ic {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: rgba(124, 92, 191, 0.15);
+            color: #c4b5f7;
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+
+        /* Bullet list */
+        ul.notes {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul.notes li {
+            padding: 6px 0 6px 20px;
+            position: relative;
+            font-size: 13.5px;
+            color: #bbbfd8;
+            border-bottom: 1px solid rgba(37, 40, 54, 0.5);
+        }
+
+        ul.notes li:last-child {
+            border-bottom: none;
+        }
+
+        ul.notes li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-size: 10px;
+            top: 9px;
+        }
+
+        /* Callout */
+        .callout {
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-size: 13px;
+            margin-bottom: 14px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .callout.tip {
+            background: rgba(62, 207, 178, 0.08);
+            border: 1px solid rgba(62, 207, 178, 0.25);
+        }
+
+        .callout.warn {
+            background: rgba(247, 201, 72, 0.08);
+            border: 1px solid rgba(247, 201, 72, 0.25);
+        }
+
+        .callout.info {
+            background: rgba(124, 92, 191, 0.1);
+            border: 1px solid rgba(124, 92, 191, 0.3);
+        }
+
+        .callout-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .callout-text {
+            color: #bbbfd8;
+            line-height: 1.6;
+        }
+
+        /* Architecture viz */
+        .arch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+            padding: 20px 0;
+        }
+
+        .arch-layer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .arch-box {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            min-width: 70px;
+        }
+
+        .arch-box.input {
+            background: rgba(62, 207, 178, 0.15);
+            border: 1px solid rgba(62, 207, 178, 0.4);
+            color: var(--accent2);
+        }
+
+        .arch-box.hidden {
+            background: rgba(124, 92, 191, 0.15);
+            border: 1px solid rgba(124, 92, 191, 0.4);
+            color: #c4b5f7;
+        }
+
+        .arch-box.relu {
+            background: rgba(247, 201, 72, 0.1);
+            border: 1px solid rgba(247, 201, 72, 0.3);
+            color: var(--accent3);
+            font-size: 10px;
+        }
+
+        .arch-box.output {
+            background: rgba(224, 92, 122, 0.15);
+            border: 1px solid rgba(224, 92, 122, 0.4);
+            color: var(--accent4);
+        }
+
+        .arch-label {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .arch-arrow {
+            font-size: 16px;
+            color: var(--border);
+            padding: 0 6px;
+            padding-bottom: 20px;
+        }
+
+        /* Result badge */
+        .result-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(62, 207, 178, 0.1);
+            border: 1px solid rgba(62, 207, 178, 0.3);
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .result-val {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent2);
+            font-family: 'Syne', sans-serif;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* Step badge for training loop */
+        .step-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 14px;
+            background: var(--surface2);
+            border-radius: 6px;
+            border-left: 3px solid var(--border);
+        }
+
+        .step-item.active {
+            border-left-color: var(--accent);
+        }
+
+        .step-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .step-text {
+            font-size: 13px;
+            color: #bbbfd8;
+        }
+
+        .step-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent2);
+        }
+
+        /* Improvements */
+        .improvement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .imp-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            transition: border-color 0.2s;
+        }
+
+        .imp-card:hover {
+            border-color: var(--accent);
+        }
+
+        .imp-icon {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .imp-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent3);
+            margin-bottom: 4px;
+        }
+
+        .imp-desc {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+
+        <!-- Header -->
+        <header>
+            <div class="tag">CampusX · Video 7 · PyTorch</div>
+            <h1>Building an ANN<br />with PyTorch</h1>
+            <div class="subtitle">Fashion MNIST Classification · End-to-End Pipeline</div>
+        </header>
+
+        <!-- Pipeline overview -->
+        <div class="pipeline">
+            <div class="pipe-step"><span class="pipe-num">1</span>Dataset</div>
+            <div class="pipe-step"><span class="pipe-num">2</span>Split & Scale</div>
+            <div class="pipe-step"><span class="pipe-num">3</span>CustomDataset</div>
+            <div class="pipe-step"><span class="pipe-num">4</span>DataLoader</div>
+            <div class="pipe-step"><span class="pipe-num">5</span>NN Model</div>
+            <div class="pipe-step"><span class="pipe-num">6</span>Train Loop</div>
+            <div class="pipe-step"><span class="pipe-num">7</span>Evaluate</div>
+        </div>
+
+        <!-- 1. Dataset -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">01</span>
+                <h2>Fashion MNIST Dataset</h2>
+                <div class="divider"></div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Total Samples</div>
+                    <div class="info-val">6,000</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Image Size</div>
+                    <div class="info-val">28 × 28</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Features (flattened)</div>
+                    <div class="info-val">784</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Classes</div>
+                    <div class="info-val">10</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">10 Class Labels</div>
+                <ul class="notes">
+                    <li>
+                        <ic>0</ic> T-shirt &nbsp;<ic>1</ic> Trouser &nbsp;<ic>2</ic> Pullover &nbsp;<ic>3</ic> Dress
+                        &nbsp;<ic>4</ic> Coat
+                    </li>
+                    <li>
+                        <ic>5</ic> Sandal &nbsp;<ic>6</ic> Shirt &nbsp;<ic>7</ic> Sneaker &nbsp;<ic>8</ic> Bag &nbsp;
+                        <ic>9</ic> Ankle Boot
+                    </li>
+                </ul>
+            </div>
+            <div class="callout info">
+                <span class="callout-icon">📌</span>
+                <div class="callout-text">Data loaded as a CSV. Column 0 = label, Columns 1–784 = pixel values (0–255).
+                    Dataset is a <ic>subset</ic> of 6000 rows used here.</div>
+            </div>
+        </section>
+
+        <!-- 2. Train/Test Split & Scaling -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">02</span>
+                <h2>Train/Test Split &amp; Feature Scaling</h2>
+                <div class="divider"></div>
+            </div>
+
+            <pre><code><span class="cm"># Extract features and labels from DataFrame</span>
+X = df.iloc[:, <span class="num">1</span>:].values   <span class="cm"># all pixel columns → shape (6000, 784)</span>
+y = df.iloc[:, <span class="num">0</span>].values   <span class="cm"># label column</span>
+
+<span class="cm"># Train-test split  (80 / 20)</span>
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>
+)
+
+<span class="cm"># Normalize pixel values to [0, 1]</span>
+X_train = X_train / <span class="num">255.0</span>
+X_test  = X_test  / <span class="num">255.0</span></code></pre>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">X_train shape</div>
+                    <div class="info-val">(4800, 784)</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">X_test shape</div>
+                    <div class="info-val">(1200, 784)</div>
+                </div>
+            </div>
+            <div class="callout tip">
+                <span class="callout-icon">💡</span>
+                <div class="callout-text">Dividing by 255.0 scales all pixel values from [0–255] to [0.0–1.0] — standard
+                    normalization for image data.</div>
+            </div>
+        </section>
+
+        <!-- 3. CustomDataset -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">03</span>
+                <h2>CustomDataset Class</h2>
+                <div class="divider"></div>
+            </div>
+
+            <pre><code><span class="kw">class</span> <span class="cls">CustomDataset</span>(Dataset):
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, features, labels):
+        self.features = torch.tensor(features, dtype=torch.float32)
+        self.labels   = torch.tensor(labels,   dtype=torch.long)
+
+    <span class="kw">def</span> <span class="fn">__len__</span>(self):
+        <span class="kw">return</span> len(self.features)
+
+    <span class="kw">def</span> <span class="fn">__getitem__</span>(self, index):
+        <span class="kw">return</span> self.features[index], self.labels[index]
+
+<span class="cm"># Create dataset objects</span>
+train_dataset = <span class="fn">CustomDataset</span>(X_train, y_train)
+test_dataset  = <span class="fn">CustomDataset</span>(X_test,  y_test)</code></pre>
+
+            <div class="card">
+                <div class="card-title">3 Dunder Methods Required by PyTorch Dataset</div>
+                <ul class="notes">
+                    <li>
+                        <ic>__init__</ic> — store features & labels as float32 and long tensors
+                    </li>
+                    <li>
+                        <ic>__len__</ic> — return total number of samples
+                    </li>
+                    <li>
+                        <ic>__getitem__</ic> — return one (feature, label) pair by index
+                    </li>
+                </ul>
+            </div>
+            <div class="callout warn">
+                <span class="callout-icon">⚠️</span>
+                <div class="callout-text">Features must be <ic>torch.float32</ic>; labels must be <ic>torch.long</ic>
+                    (int64) for CrossEntropyLoss to work correctly.</div>
+            </div>
+        </section>
+
+        <!-- 4. DataLoader -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">04</span>
+                <h2>DataLoader</h2>
+                <div class="divider"></div>
+            </div>
+
+            <pre><code><span class="kw">from</span> torch.utils.data <span class="kw">import</span> DataLoader
+
+train_loader = DataLoader(train_dataset, batch_size=<span class="num">32</span>, shuffle=<span class="num">True</span>)
+test_loader  = DataLoader(test_dataset,  batch_size=<span class="num">32</span>, shuffle=<span class="num">False</span>)</code></pre>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Batch Size</div>
+                    <div class="info-val">32</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Train Batches</div>
+                    <div class="info-val">150</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Train shuffle</div>
+                    <div class="info-val" style="color:var(--accent2)">True</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Test shuffle</div>
+                    <div class="info-val" style="color:var(--accent4)">False</div>
+                </div>
+            </div>
+            <div class="callout info">
+                <span class="callout-icon">📦</span>
+                <div class="callout-text">One batch of 32 images → model → output shape <ic>(32, 10)</ic>. Each of 10
+                    values is a raw logit for one class. Labels shape = <ic>(32,)</ic>.</div>
+            </div>
+        </section>
+
+        <!-- 5. Model Architecture -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">05</span>
+                <h2>Neural Network Architecture</h2>
+                <div class="divider"></div>
+            </div>
+
+            <div class="arch">
+                <div class="arch-layer">
+                    <div class="arch-box input">784</div>
+                    <div class="arch-label">Input</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">
+                    <div class="arch-box hidden">128</div>
+                    <div class="arch-box relu">ReLU</div>
+                    <div class="arch-label">Hidden 1</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">
+                    <div class="arch-box hidden">64</div>
+                    <div class="arch-box relu">ReLU</div>
+                    <div class="arch-label">Hidden 2</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">
+                    <div class="arch-box output">10</div>
+                    <div class="arch-label">Output</div>
+                </div>
+            </div>
+
+            <pre><code><span class="kw">class</span> <span class="cls">MyNN</span>(nn.Module):
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, num_features):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Linear(num_features, <span class="num">128</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="num">128</span>, <span class="num">64</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="num">64</span>, <span class="num">10</span>)   <span class="cm"># 10 output logits (no Softmax)</span>
+        )
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">return</span> self.model(x)</code></pre>
+
+            <div class="callout tip">
+                <span class="callout-icon">💡</span>
+                <div class="callout-text">No Softmax at the end — <ic>nn.CrossEntropyLoss</ic> applies log-softmax
+                    internally. Adding Softmax manually would double it.</div>
+            </div>
+        </section>
+
+        <!-- 6. Setup: Model / Loss / Optimizer -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">06</span>
+                <h2>Model Setup — Loss &amp; Optimizer</h2>
+                <div class="divider"></div>
+            </div>
+
+            <pre><code><span class="cm"># Hyperparameters</span>
+epochs        = <span class="num">100</span>
+learning_rate = <span class="num">0.1</span>
+
+<span class="cm"># Instantiate model — pass number of input features</span>
+model = <span class="fn">MyNN</span>(X_train.shape[<span class="num">1</span>])   <span class="cm"># X_train.shape[1] = 784</span>
+
+<span class="cm"># Loss function</span>
+criterion = nn.CrossEntropyLoss()
+
+<span class="cm"># Optimizer</span>
+optimizer = optim.SGD(model.parameters(), lr=learning_rate)</code></pre>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Epochs</div>
+                    <div class="info-val">100</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Learning Rate</div>
+                    <div class="info-val">0.1</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Loss</div>
+                    <div class="info-val" style="font-size:12px">CrossEntropy</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Optimizer</div>
+                    <div class="info-val">SGD</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Training Loop -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">07</span>
+                <h2>Training Loop</h2>
+                <div class="divider"></div>
+            </div>
+
+            <pre><code><span class="kw">for</span> epoch <span class="kw">in</span> range(epochs):
+    total_epoch_loss = <span class="num">0</span>
+
+    <span class="kw">for</span> batch_features, batch_labels <span class="kw">in</span> train_loader:
+
+        <span class="cm"># 1. Forward pass</span>
+        outputs = model(batch_features)
+
+        <span class="cm"># 2. Calculate loss</span>
+        loss = criterion(outputs, batch_labels)
+
+        <span class="cm"># 3. Back pass — zero grads first!</span>
+        optimizer.zero_grad()
+        loss.backward()
+
+        <span class="cm"># 4. Update weights</span>
+        optimizer.step()
+
+        total_epoch_loss += loss.item()
+
+    avg_loss = total_epoch_loss / len(train_loader)
+    print(f<span class="str">'Epoch: {epoch + 1} , Loss: {avg_loss}'</span>)</code></pre>
+
+            <div class="card">
+                <div class="card-title">4-Step Inner Loop (per batch)</div>
+                <div class="step-flow">
+                    <div class="step-item active">
+                        <span class="step-icon">➡️</span>
+                        <div>
+                            <div class="step-code">outputs = model(batch_features)</div>
+                            <div class="step-text">Forward pass — compute predictions</div>
+                        </div>
+                    </div>
+                    <div class="step-item active">
+                        <span class="step-icon">📉</span>
+                        <div>
+                            <div class="step-code">loss = criterion(outputs, batch_labels)</div>
+                            <div class="step-text">Compute CrossEntropy loss</div>
+                        </div>
+                    </div>
+                    <div class="step-item active">
+                        <span class="step-icon">🔄</span>
+                        <div>
+                            <div class="step-code">optimizer.zero_grad() → loss.backward()</div>
+                            <div class="step-text">Zero old gradients, then backpropagate</div>
+                        </div>
+                    </div>
+                    <div class="step-item active">
+                        <span class="step-icon">⬆️</span>
+                        <div>
+                            <div class="step-code">optimizer.step()</div>
+                            <div class="step-text">Update all model weights via SGD</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout warn">
+                <span class="callout-icon">⚠️</span>
+                <div class="callout-text">
+                    <ic>optimizer.zero_grad()</ic> must be called before <ic>loss.backward()</ic> — PyTorch accumulates
+                    gradients by default. Skipping this causes incorrect weight updates.
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Training output -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">08</span>
+                <h2>Training Output</h2>
+                <div class="divider"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Sample Loss Values (last few epochs)</div>
+                <ul class="notes" style="font-family:'JetBrains Mono',monospace; font-size:12px;">
+                    <li>Epoch: 87 , Loss: <span style="color:var(--accent2)">0.01875...</span></li>
+                    <li>Epoch: 90 , Loss: <span style="color:var(--accent2)">0.06782...</span></li>
+                    <li>Epoch: 95 , Loss: <span style="color:var(--accent2)">0.02004...</span></li>
+                    <li>Epoch: 100 , Loss: <span style="color:var(--accent2)">0.00831...</span></li>
+                </ul>
+            </div>
+            <div class="callout tip">
+                <span class="callout-icon">📊</span>
+                <div class="callout-text">Loss steadily decreases across 100 epochs, indicating the model is learning.
+                    Occasional spikes are normal with SGD due to mini-batch variance.</div>
+            </div>
+        </section>
+
+        <!-- 9. Evaluation -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">09</span>
+                <h2>Evaluation</h2>
+                <div class="divider"></div>
+            </div>
+
+            <pre><code><span class="cm"># Switch to eval mode (disables dropout/batchnorm if used)</span>
+model.eval()
+
+total   = <span class="num">0</span>
+correct = <span class="num">0</span>
+
+<span class="kw">with</span> torch.no_grad():    <span class="cm"># disable gradient computation</span>
+    <span class="kw">for</span> batch_features, batch_labels <span class="kw">in</span> test_loader:
+
+        outputs = model(batch_features)
+
+        <span class="cm"># Get predicted class (index of max logit)</span>
+        _, predicted = torch.max(outputs, <span class="num">1</span>)
+
+        total   += batch_labels.shape[<span class="num">0</span>]
+        correct += (predicted == batch_labels).sum().item()
+
+accuracy = correct / total
+print(accuracy)</code></pre>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <div class="result-badge">
+                    <div>
+                        <div class="result-val">83.25%</div>
+                        <div class="result-label">Test Accuracy</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout info" style="margin-top:16px">
+                <span class="callout-icon">🔍</span>
+                <div class="callout-text">
+                    <ic>torch.max(outputs, 1)</ic> returns <ic>(values, indices)</ic>. We only need <ic>indices</ic> —
+                    the predicted class. <ic>_</ic> discards the values. <ic>torch.no_grad()</ic> saves memory and
+                    compute since no backprop is needed.
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. Model Summary -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">10</span>
+                <h2>Model Summary (after eval())</h2>
+                <div class="divider"></div>
+            </div>
+
+            <pre><code>MyNN(
+  (model): Sequential(
+    (0): Linear(in_features=<span class="num">784</span>, out_features=<span class="num">128</span>, bias=<span class="num">True</span>)
+    (1): ReLU()
+    (2): Linear(in_features=<span class="num">128</span>, out_features=<span class="num">64</span>,  bias=<span class="num">True</span>)
+    (3): ReLU()
+    (4): Linear(in_features=<span class="num">64</span>,  out_features=<span class="num">10</span>,  bias=<span class="num">True</span>)
+  )
+)</code></pre>
+        </section>
+
+        <!-- 11. Improvements -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">11</span>
+                <h2>Suggested Improvements</h2>
+                <div class="divider"></div>
+            </div>
+
+            <div class="improvement-grid">
+                <div class="imp-card">
+                    <div class="imp-icon">🗄️</div>
+                    <div class="imp-title">Full Dataset</div>
+                    <div class="imp-desc">Use all 60,000 Fashion MNIST samples instead of 6,000 for better
+                        generalization.</div>
+                </div>
+                <div class="imp-card">
+                    <div class="imp-icon">⚡</div>
+                    <div class="imp-title">GPU Training</div>
+                    <div class="imp-desc">Move model and tensors to CUDA with <ic>.to(device)</ic> to speed up training
+                        significantly.</div>
+                </div>
+                <div class="imp-card">
+                    <div class="imp-icon">🔧</div>
+                    <div class="imp-title">Better Optimizer</div>
+                    <div class="imp-desc">Replace SGD with Adam (<ic>optim.Adam</ic>) for faster convergence and better
+                        results.</div>
+                </div>
+                <div class="imp-card">
+                    <div class="imp-icon">🎯</div>
+                    <div class="imp-title">Tune Hyperparams</div>
+                    <div class="imp-desc">Tune epochs, learning rate, batch size, and number of hidden units via HPT.
+                    </div>
+                </div>
+                <div class="imp-card">
+                    <div class="imp-icon">⚖️</div>
+                    <div class="imp-title">Weight Init</div>
+                    <div class="imp-desc">Use proper weight initialization (He/Kaiming for ReLU) to improve convergence.
+                    </div>
+                </div>
+                <div class="imp-card">
+                    <div class="imp-icon">🧪</div>
+                    <div class="imp-title">Regularization</div>
+                    <div class="imp-desc">Add Dropout layers or L2 penalty to reduce overfitting on the training data.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Reference -->
+        <section>
+            <div class="section-header">
+                <span class="section-num">⚡</span>
+                <h2>Quick Reference</h2>
+                <div class="divider"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Key PyTorch Concepts Used</div>
+                <ul class="notes">
+                    <li>
+                        <ic>Dataset</ic> — abstract base class; implement <ic>__len__</ic> + <ic>__getitem__</ic>
+                    </li>
+                    <li>
+                        <ic>DataLoader</ic> — wraps Dataset; handles batching, shuffling, parallel loading
+                    </li>
+                    <li>
+                        <ic>nn.Module</ic> — base for all neural network classes; implement <ic>forward()</ic>
+                    </li>
+                    <li>
+                        <ic>nn.Sequential</ic> — chains layers linearly; no skip connections needed here
+                    </li>
+                    <li>
+                        <ic>nn.CrossEntropyLoss</ic> — combines LogSoftmax + NLLLoss; expects raw logits
+                    </li>
+                    <li>
+                        <ic>optim.SGD</ic> — Stochastic Gradient Descent optimizer
+                    </li>
+                    <li>
+                        <ic>loss.backward()</ic> — computes gradients via autograd
+                    </li>
+                    <li>
+                        <ic>optimizer.zero_grad()</ic> — clears accumulated gradients before each step
+                    </li>
+                    <li>
+                        <ic>optimizer.step()</ic> — applies computed gradients to update weights
+                    </li>
+                    <li>
+                        <ic>torch.no_grad()</ic> — context manager to skip gradient tracking during eval
+                    </li>
+                    <li>
+                        <ic>model.eval()</ic> — sets model to evaluation mode (affects Dropout, BatchNorm)
+                    </li>
+                    <li>
+                        <ic>torch.max(tensor, dim=1)</ic> — returns (max_values, argmax_indices) along class dim
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <footer>CampusX · Building ANN using PyTorch · Video 7 · Fashion MNIST</footer>
+    </div>
+</body>
+
+</html>
