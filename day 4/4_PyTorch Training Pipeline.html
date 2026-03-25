@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyTorch Training Pipeline | CampusX Video 4</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --surface2: #1a1e2a;
+            --border: #252a38;
+            --accent: #5b8fff;
+            --accent2: #ff6b6b;
+            --accent3: #43e89b;
+            --accent4: #f9c74f;
+            --text: #c8d0e8;
+            --text-dim: #606880;
+            --text-bright: #eef2ff;
+            --code-bg: #0a0c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .page-header {
+            border-left: 4px solid var(--accent);
+            padding: 1.2rem 1.6rem;
+            background: var(--surface);
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 2.5rem;
+        }
+
+        .page-header .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--text-bright);
+        }
+
+        .page-header p {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 0.3rem;
+        }
+
+        /* Section Headers */
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent);
+            background: rgba(91, 143, 255, 0.12);
+            border: 1px solid rgba(91, 143, 255, 0.25);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .section-title h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .green {
+            color: var(--accent3);
+        }
+
+        .blue {
+            color: var(--accent);
+        }
+
+        .red {
+            color: var(--accent2);
+        }
+
+        .yellow {
+            color: var(--accent4);
+        }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Code block */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.7;
+            overflow-x: auto;
+            color: #abb2bf;
+        }
+
+        .kw {
+            color: #c678dd;
+        }
+
+        .fn {
+            color: #61afef;
+        }
+
+        .str {
+            color: #98c379;
+        }
+
+        .cm {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .num {
+            color: #d19a66;
+        }
+
+        .cls {
+            color: #e5c07b;
+        }
+
+        .var {
+            color: #e06c75;
+        }
+
+        /* List */
+        ul.notes {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul.notes li {
+            padding: 0.35rem 0 0.35rem 1.3rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: var(--text);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        ul.notes li:last-child {
+            border-bottom: none;
+        }
+
+        ul.notes li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Flow diagram */
+        .flow {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 1rem 0;
+        }
+
+        .flow-step {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            white-space: nowrap;
+        }
+
+        .flow-arrow {
+            color: var(--accent);
+            font-size: 1rem;
+        }
+
+        .flow-step.active {
+            border-color: var(--accent);
+            background: rgba(91, 143, 255, 0.1);
+            color: var(--accent);
+        }
+
+        /* Pill badge */
+        .badge {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.55rem;
+            border-radius: 20px;
+            margin: 0.15rem 0.1rem;
+        }
+
+        .badge-blue {
+            background: rgba(91, 143, 255, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(91, 143, 255, 0.3);
+        }
+
+        .badge-green {
+            background: rgba(67, 232, 155, 0.12);
+            color: var(--accent3);
+            border: 1px solid rgba(67, 232, 155, 0.3);
+        }
+
+        .badge-red {
+            background: rgba(255, 107, 107, 0.12);
+            color: var(--accent2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .badge-yellow {
+            background: rgba(249, 199, 79, 0.12);
+            color: var(--accent4);
+            border: 1px solid rgba(249, 199, 79, 0.3);
+        }
+
+        /* Math formula */
+        .formula {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            background: var(--code-bg);
+            border-left: 3px solid var(--accent4);
+            padding: 0.6rem 1rem;
+            border-radius: 0 6px 6px 0;
+            color: var(--accent4);
+            margin: 0.5rem 0;
+        }
+
+        /* Epoch table */
+        .epoch-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+        }
+
+        .epoch-table th {
+            background: var(--surface2);
+            color: var(--accent);
+            padding: 0.5rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        .epoch-table td {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .epoch-table tr:nth-child(even) td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .epoch-table td.loss-high {
+            color: var(--accent2);
+        }
+
+        .epoch-table td.loss-mid {
+            color: var(--accent4);
+        }
+
+        .epoch-table td.loss-low {
+            color: var(--accent3);
+        }
+
+        /* Result box */
+        .result-box {
+            background: rgba(67, 232, 155, 0.08);
+            border: 1px solid rgba(67, 232, 155, 0.3);
+            border-radius: 10px;
+            padding: 1rem 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .result-box .big-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent3);
+        }
+
+        .result-box .label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .result-box .note {
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+
+        .inline-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            color: var(--accent3);
+        }
+
+        .highlight-box {
+            background: rgba(249, 199, 79, 0.07);
+            border: 1px solid rgba(249, 199, 79, 0.25);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            font-size: 0.88rem;
+            color: var(--accent4);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="tag">CampusX · PyTorch Series · Video 4</div>
+        <h1>PyTorch Training Pipeline</h1>
+        <p>Breast Cancer Classification — Manual NN from scratch using PyTorch tensors</p>
+    </div>
+
+    <!-- SECTION 1: Plan of Attack -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">01</span>
+            <h2>Plan of Attack</h2>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title blue">Goals</div>
+                <ul class="notes">
+                    <li>Build a simple neural network</li>
+                    <li>Train on a real-world dataset (Breast Cancer)</li>
+                    <li>Mimic the PyTorch workflow manually</li>
+                    <li>Lots of manual elements — end result accuracy not the focus</li>
+                    <li>Learn the <strong>Training Pipeline</strong> — the foundation</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-title green">Series Structure</div>
+                <div class="flow" style="flex-direction:column; align-items:flex-start;">
+                    <div class="flow-step">Video 1 — Intro</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step">Video 2 — Tensors</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step">Video 3 — Computation + Autograd</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step active">Video 4 — Training Pipeline ← You are here</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- SECTION 2: Code Flow -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">02</span>
+            <h2>Code Flow Overview</h2>
+        </div>
+        <div class="card">
+            <div class="flow">
+                <div class="flow-step">1. Load Dataset</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">2. Preprocessing</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step active">3. Training Process</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">4. Model Evaluation</div>
+            </div>
+            <div style="margin-top:0.8rem; padding-left:1rem;">
+                <p style="font-size:0.85rem; color:var(--text-dim);">Training Process breakdown:</p>
+                <div class="flow" style="margin-top:0.4rem; flex-wrap:wrap;">
+                    <span class="badge badge-blue">a. Create Model</span>
+                    <span class="badge badge-blue">b. Forward Pass</span>
+                    <span class="badge badge-blue">c. Loss Calculation</span>
+                    <span class="badge badge-blue">d. Backprop</span>
+                    <span class="badge badge-blue">e. Parameter Update</span>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title yellow">Neuron Diagram</div>
+            <p style="font-size:0.88rem;">Single neuron receiving <strong>30 inputs</strong> (features) with weights W
+                and bias b</p>
+            <div class="formula">z = W·X + b &nbsp;&nbsp;&nbsp; → &nbsp;&nbsp;&nbsp; ŷ = σ(z)</div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- SECTION 3: Data Loading & Preprocessing -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">03</span>
+            <h2>Data Loading &amp; Preprocessing</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-title blue">Imports</div>
+            <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> torch
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> <span class="fn">train_test_split</span>
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> <span class="cls">StandardScaler</span>
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> <span class="cls">LabelEncoder</span></pre>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title green">Load Dataset</div>
+                <pre><span class="var">df</span> = pd.<span class="fn">read_csv</span>(<span class="str">'breast_cancer.csv'</span>)
+<span class="cm"># Shape: (569, 33)</span>
+<span class="cm"># Drop unnecessary columns</span>
+df.<span class="fn">drop</span>(columns=[<span class="str">'id'</span>, <span class="str">'Unnamed: 32'</span>],
+       inplace=<span class="kw">True</span>)
+<span class="cm"># Final shape: (569, 31)</span></pre>
+                <ul class="notes" style="margin-top:0.6rem;">
+                    <li>Target column: <span class="inline-code">diagnosis</span> (M / B)</li>
+                    <li>Features: 30 numeric columns</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-title yellow">Train-Test Split + Scaling</div>
+                <pre><span class="cm"># 80/20 split</span>
+<span class="var">X_train</span>, <span class="var">X_test</span>, <span class="var">y_train</span>, <span class="var">y_test</span> = <span class="fn">train_test_split</span>(
+    df.<span class="fn">iloc</span>[:, <span class="num">1</span>:],   <span class="cm"># features</span>
+    df.<span class="fn">iloc</span>[:, <span class="num">0</span>],    <span class="cm"># target</span>
+    test_size=<span class="num">0.2</span>
+)
+
+<span class="cm"># StandardScaler on features</span>
+<span class="var">scaler</span> = <span class="cls">StandardScaler</span>()
+<span class="var">X_train</span> = scaler.<span class="fn">fit_transform</span>(X_train)
+<span class="var">X_test</span>  = scaler.<span class="fn">transform</span>(X_test)</pre>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title red">Label Encoding</div>
+                <pre><span class="cm"># B → 0, M → 1</span>
+<span class="var">encoder</span> = <span class="cls">LabelEncoder</span>()
+<span class="var">y_train</span> = encoder.<span class="fn">fit_transform</span>(y_train)
+<span class="var">y_test</span>  = encoder.<span class="fn">transform</span>(y_test)</pre>
+                <p style="font-size:0.82rem; color:var(--text-dim); margin-top:0.5rem;">Converts string labels (B/M) to
+                    0/1 integers</p>
+            </div>
+            <div class="card">
+                <div class="card-title green">Numpy → PyTorch Tensors</div>
+                <pre><span class="var">X_train_tensor</span> = torch.<span class="fn">from_numpy</span>(X_train)
+<span class="var">X_test_tensor</span>  = torch.<span class="fn">from_numpy</span>(X_test)
+<span class="var">y_train_tensor</span> = torch.<span class="fn">from_numpy</span>(y_train)
+<span class="var">y_test_tensor</span>  = torch.<span class="fn">from_numpy</span>(y_test)
+
+<span class="cm"># Shapes:</span>
+<span class="cm"># X_train_tensor → torch.Size([455, 30])</span>
+<span class="cm"># y_train_tensor → torch.Size([455])</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- SECTION 4: Model Definition -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">04</span>
+            <h2>Defining the Model — MySimpleNN</h2>
+        </div>
+        <div class="card">
+            <div class="card-title blue">Full Class Definition</div>
+            <pre><span class="kw">class</span> <span class="cls">MySimpleNN</span>():
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, X):
+        <span class="cm"># Random weights, shape = [n_features, 1]</span>
+        self.weights = torch.<span class="fn">rand</span>(X.shape[<span class="num">1</span>], <span class="num">1</span>,
+                          dtype=torch.float64,
+                          requires_grad=<span class="kw">True</span>)
+        <span class="cm"># Bias initialized to zero</span>
+        self.bias = torch.<span class="fn">zeros</span>(<span class="num">1</span>,
+                       dtype=torch.float64,
+                       requires_grad=<span class="kw">True</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, X):
+        z = torch.<span class="fn">matmul</span>(X, self.weights) + self.bias
+        y_pred = torch.<span class="fn">sigmoid</span>(z)
+        <span class="kw">return</span> y_pred
+
+    <span class="kw">def</span> <span class="fn">loss_function</span>(self, y_pred, y):
+        <span class="cm"># Clamp to avoid log(0)</span>
+        epsilon = <span class="num">1e-7</span>
+        y_pred = torch.<span class="fn">clamp</span>(y_pred, epsilon, <span class="num">1</span> - epsilon)
+        <span class="cm"># Binary Cross-Entropy Loss</span>
+        loss = -(y * torch.<span class="fn">log</span>(y_pred) +
+                 (<span class="num">1</span> - y) * torch.<span class="fn">log</span>(<span class="num">1</span> - y_pred)).<span class="fn">mean</span>()
+        <span class="kw">return</span> loss</pre>
+        </div>
+
+        <div class="grid-3">
+            <div class="card">
+                <div class="card-title green">Weights</div>
+                <ul class="notes">
+                    <li><span class="inline-code">torch.rand([30, 1])</span></li>
+                    <li>dtype: float64</li>
+                    <li>requires_grad = True</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-title blue">Forward Pass</div>
+                <ul class="notes">
+                    <li>Linear: <span class="inline-code">matmul(X, W) + b</span></li>
+                    <li>Activation: <span class="inline-code">sigmoid(z)</span></li>
+                    <li>Output range: (0, 1)</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-title red">BCE Loss</div>
+                <ul class="notes">
+                    <li>Clamp predictions (ε = 1e-7)</li>
+                    <li>Prevents log(0) = −∞</li>
+                    <li>Returns scalar mean</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="highlight-box" style="margin-top:0.5rem;">
+            💡 <strong>Why requires_grad=True?</strong> PyTorch uses this flag to track all operations on the tensor so
+            it can automatically compute gradients during <span class="inline-code">loss.backward()</span>.
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- SECTION 5: Training Pipeline -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">05</span>
+            <h2>Training Pipeline</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-title blue">Hyperparameters</div>
+            <div style="display:flex; gap:2rem; padding:0.3rem 0;">
+                <div><span class="badge badge-yellow">learning_rate</span> <span
+                        style="font-family:'JetBrains Mono'; color:var(--accent4);">= 0.1</span></div>
+                <div><span class="badge badge-yellow">epochs</span> <span
+                        style="font-family:'JetBrains Mono'; color:var(--accent4);">= 25</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title green">Complete Training Loop</div>
+            <pre><span class="cm"># Create model</span>
+<span class="var">model</span> = <span class="cls">MySimpleNN</span>(X_train_tensor)
+
+<span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(epochs):
+
+    <span class="cm"># 1. Forward Pass</span>
+    <span class="var">y_pred</span> = model.<span class="fn">forward</span>(X_train_tensor)
+
+    <span class="cm"># 2. Loss Calculation</span>
+    <span class="var">loss</span> = model.<span class="fn">loss_function</span>(y_pred, y_train_tensor)
+    <span class="fn">print</span>(f<span class="str">'Epoch: {epoch + 1}, Loss: {loss.item()}'</span>)
+
+    <span class="cm"># 3. Backward Pass (compute gradients)</span>
+    loss.<span class="fn">backward</span>()
+
+    <span class="cm"># 4. Parameter Update (no gradient tracking needed)</span>
+    <span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+        model.weights -= learning_rate * model.weights.grad
+        model.bias    -= learning_rate * model.bias.grad
+
+    <span class="cm"># 5. Zero Gradients (prevent accumulation)</span>
+    model.weights.grad.<span class="fn">zero_</span>()
+    model.bias.grad.<span class="fn">zero_</span>()</pre>
+        </div>
+
+        <div class="card">
+            <div class="card-title yellow">Step-by-Step Explanation</div>
+            <ul class="notes">
+                <li><strong class="blue">Forward Pass</strong> — Compute predictions using current W & b</li>
+                <li><strong class="red">Loss Calc</strong> — Measure how wrong predictions are (BCE)</li>
+                <li><strong class="green">Backward Pass</strong> — <span class="inline-code">loss.backward()</span>
+                    computes ∂L/∂W and ∂L/∂b via Autograd</li>
+                <li><strong class="yellow">Param Update</strong> — Gradient descent inside <span
+                        class="inline-code">torch.no_grad()</span> to skip tracking</li>
+                <li><strong class="blue">Zero Grads</strong> — <span class="inline-code">grad.zero_()</span> prevents
+                    gradient accumulation across epochs</li>
+            </ul>
+        </div>
+
+        <!-- Math -->
+        <div class="card">
+            <div class="card-title red">Update Equations</div>
+            <div class="formula">W_new = W_old − lr · (∂L/∂W)</div>
+            <div class="formula">b_new = b_old − lr · (∂L/∂b)</div>
+            <p style="font-size:0.82rem; color:var(--text-dim); margin-top:0.5rem;">lr = learning rate = 0.1 | gradients
+                computed by PyTorch Autograd</p>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- SECTION 6: Training Output -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">06</span>
+            <h2>Training Output — Loss Over 25 Epochs</h2>
+        </div>
+        <div class="card">
+            <table class="epoch-table">
+                <thead>
+                    <tr>
+                        <th>Epoch</th>
+                        <th>Loss</th>
+                        <th>Epoch</th>
+                        <th>Loss</th>
+                        <th>Epoch</th>
+                        <th>Loss</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td class="loss-high">3.8735</td>
+                        <td>10</td>
+                        <td class="loss-mid">2.4945</td>
+                        <td>19</td>
+                        <td class="loss-low">0.9977</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td class="loss-high">3.7474</td>
+                        <td>11</td>
+                        <td class="loss-mid">2.3109</td>
+                        <td>20</td>
+                        <td class="loss-low">0.9112</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td class="loss-high">3.6134</td>
+                        <td>12</td>
+                        <td class="loss-mid">2.1263</td>
+                        <td>21</td>
+                        <td class="loss-low">0.8476</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td class="loss-high">3.4704</td>
+                        <td>13</td>
+                        <td class="loss-mid">1.9356</td>
+                        <td>22</td>
+                        <td class="loss-low">0.8041</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td class="loss-high">3.3228</td>
+                        <td>14</td>
+                        <td class="loss-mid">1.7455</td>
+                        <td>23</td>
+                        <td class="loss-low">0.7762</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td class="loss-high">3.1695</td>
+                        <td>15</td>
+                        <td class="loss-mid">1.5644</td>
+                        <td>24</td>
+                        <td class="loss-low">0.7590</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td class="loss-high">3.0100</td>
+                        <td>16</td>
+                        <td class="loss-mid">1.3940</td>
+                        <td>25</td>
+                        <td class="loss-low">0.7485</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td class="loss-mid">2.8442</td>
+                        <td>17</td>
+                        <td class="loss-mid">1.2408</td>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td class="loss-mid">2.6746</td>
+                        <td>18</td>
+                        <td class="loss-mid">1.1079</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="display:flex; gap:1.5rem; margin-top:0.8rem; font-family:'JetBrains Mono'; font-size:0.72rem;">
+                <span style="color:var(--accent2);">■ High &gt; 2.5</span>
+                <span style="color:var(--accent4);">■ Mid 1.0–2.5</span>
+                <span style="color:var(--accent3);">■ Low &lt; 1.0</span>
+            </div>
+        </div>
+        <div class="highlight-box">
+            📉 Loss decreasing consistently from <strong>3.87 → 0.75</strong> over 25 epochs confirms the training loop
+            is working correctly.
+            Final bias = <span class="inline-code">tensor([-0.0940])</span>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- SECTION 7: Evaluation -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">07</span>
+            <h2>Model Evaluation</h2>
+        </div>
+        <div class="card">
+            <div class="card-title blue">Evaluation Code</div>
+            <pre><span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+    <span class="cm"># Run forward pass on test data</span>
+    <span class="var">y_pred</span> = model.<span class="fn">forward</span>(X_test_tensor)
+
+    <span class="cm"># Threshold at 0.5 → convert to 0 or 1</span>
+    <span class="var">y_pred</span> = (y_pred > <span class="num">0.5</span>).<span class="fn">float</span>()
+
+    <span class="cm"># Compare with ground truth</span>
+    <span class="var">accuracy</span> = (y_pred == y_test_tensor).<span class="fn">float</span>().<span class="fn">mean</span>()
+    <span class="fn">print</span>(f<span class="str">'Accuracy: {accuracy.item()}'</span>)</pre>
+        </div>
+
+        <div class="result-box">
+            <div>
+                <div class="label">Final Accuracy (25 epochs, lr=0.1)</div>
+                <div class="big-num">51.47%</div>
+            </div>
+            <div style="border-left:1px solid rgba(67,232,155,0.2); padding-left:1rem;">
+                <div class="note">⚠️ Low accuracy is <strong>expected</strong> — the goal of this video is to understand
+                    the training pipeline structure, not optimize performance.</div>
+                <div class="note" style="margin-top:0.5rem;">More epochs, better lr tuning, and a proper architecture
+                    would improve this significantly.</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-title yellow">Why Only ~51%?</div>
+            <ul class="notes">
+                <li>Only 25 epochs — model hasn't converged</li>
+                <li>Single neuron (no hidden layers) — limited capacity</li>
+                <li>No lr scheduling or optimization (e.g., Adam)</li>
+                <li>Manual gradient updates (not using <span class="inline-code">torch.optim</span>)</li>
+                <li>This is intentional — foundational learning exercise</li>
+            </ul>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- SECTION 8: Key Takeaways -->
+    <div class="section">
+        <div class="section-title">
+            <span class="num">08</span>
+            <h2>Key Takeaways</h2>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title green">What You Learned</div>
+                <ul class="notes">
+                    <li>Full PyTorch training loop from scratch</li>
+                    <li>How Autograd computes gradients automatically</li>
+                    <li>Why <span class="inline-code">torch.no_grad()</span> is needed during updates</li>
+                    <li>Why gradients must be zeroed each epoch</li>
+                    <li>BCE loss + sigmoid for binary classification</li>
+                    <li>Converting numpy arrays to tensors</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-title blue">Next Steps</div>
+                <ul class="notes">
+                    <li>Use <span class="inline-code">nn.Module</span> to define models properly</li>
+                    <li>Use <span class="inline-code">torch.optim</span> (Adam/SGD) for optimization</li>
+                    <li>Use <span class="inline-code">nn.BCELoss</span> instead of manual loss</li>
+                    <li>Add hidden layers for better capacity</li>
+                    <li>Use <span class="inline-code">DataLoader</span> for batched training</li>
+                    <li>Train for more epochs with lr scheduling</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div
+        style="text-align:center; padding:2rem 0 0.5rem; font-family:'JetBrains Mono'; font-size:0.7rem; color:var(--text-dim);">
+        CampusX · PyTorch Training Pipeline · Video 4 · Notes by Claude
+    </div>
+
+</body>
+
+</html>
