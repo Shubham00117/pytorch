@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyTorch NN Module | Video 5 | CampusX</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #1c2333;
+            --border: #30363d;
+            --accent: #58a6ff;
+            --accent2: #f78166;
+            --accent3: #3fb950;
+            --accent4: #d2a8ff;
+            --accent5: #ffa657;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --code-bg: #0d1117;
+            --tag-bg: #1f2937;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .header-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent3);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        h1 span {
+            color: var(--accent);
+        }
+
+        .meta {
+            font-size: 12px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.25rem;
+        }
+
+        /* SECTIONS */
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h2 .icon {
+            font-size: 1rem;
+        }
+
+        h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent4);
+            margin: 1rem 0 0.5rem;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .card-sm {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+        }
+
+        .card-sm .card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent5);
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .card-sm p {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* IMPROVEMENTS LIST */
+        .imp-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .imp-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.65rem 1rem;
+        }
+
+        .imp-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            background: var(--accent);
+            color: #000;
+            border-radius: 4px;
+            padding: 2px 7px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .imp-text {
+            font-size: 13px;
+        }
+
+        .imp-text code {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent5);
+            font-size: 12px;
+            background: var(--code-bg);
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        /* CODE BLOCKS */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.75;
+            margin: 0.75rem 0;
+            position: relative;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.05em;
+        }
+
+        .kw {
+            color: #ff7b72;
+        }
+
+        .fn {
+            color: #d2a8ff;
+        }
+
+        .cls {
+            color: #ffa657;
+        }
+
+        .str {
+            color: #a5d6ff;
+        }
+
+        .num {
+            color: #79c0ff;
+        }
+
+        .cm {
+            color: #8b949e;
+            font-style: italic;
+        }
+
+        .param {
+            color: #e6edf3;
+        }
+
+        .out {
+            color: var(--accent3);
+        }
+
+        .builtin {
+            color: #79c0ff;
+        }
+
+        /* COMPARISON TABLE */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 0.75rem 0;
+        }
+
+        th {
+            background: var(--surface2);
+            color: var(--accent);
+            font-family: 'Syne', sans-serif;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            vertical-align: top;
+        }
+
+        td code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            color: var(--accent5);
+            background: var(--code-bg);
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        tr:hover td {
+            background: var(--surface);
+        }
+
+        /* KEY POINT CALLOUTS */
+        .callout {
+            border-left: 3px solid;
+            border-radius: 0 6px 6px 0;
+            padding: 0.6rem 1rem;
+            margin: 0.75rem 0;
+            font-size: 13px;
+            background: var(--surface);
+        }
+
+        .callout.info {
+            border-color: var(--accent);
+            color: #a5c8ff;
+        }
+
+        .callout.warn {
+            border-color: var(--accent5);
+            color: #ffd49a;
+        }
+
+        .callout.tip {
+            border-color: var(--accent3);
+            color: #9be9a8;
+        }
+
+        .callout strong {
+            font-weight: 600;
+        }
+
+        .callout code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            background: var(--code-bg);
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        /* MODEL SUMMARY BOX */
+        .summary-box {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+
+        .summary-box .layer {
+            color: var(--accent4);
+        }
+
+        .summary-box .param-count {
+            color: var(--accent5);
+        }
+
+        .summary-box .total {
+            color: var(--accent3);
+            font-weight: 600;
+        }
+
+        /* TAGS */
+        .tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 7px;
+            color: var(--muted);
+            margin: 2px;
+        }
+
+        /* TWO COLUMN */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        @media (max-width: 700px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* BADGE */
+        .badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-weight: 700;
+        }
+
+        .badge.new {
+            background: #1a3a1a;
+            color: var(--accent3);
+            border: 1px solid #2ea043;
+        }
+
+        .badge.old {
+            background: #2d1a1a;
+            color: var(--accent2);
+            border: 1px solid #f85149;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-tag">🔥 PyTorch · Deep Learning · CampusX</div>
+        <h1>PyTorch <span>nn Module</span> — Video 5</h1>
+        <div class="meta">
+            <span>📅 03 December 2024</span>
+            <span>⏱ 39:26</span>
+            <span>📁 pytorch-nn-module.ipynb</span>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 1. IMPROVEMENTS OVERVIEW -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section>
+        <h2><span class="icon">🎯</span> Training Pipeline Improvements</h2>
+        <div class="imp-list">
+            <div class="imp-item">
+                <span class="imp-num">01</span>
+                <span class="imp-text">Build neural network using <code>nn</code> module</span>
+            </div>
+            <div class="imp-item">
+                <span class="imp-num">02</span>
+                <span class="imp-text">Use built-in <code>nn.Sigmoid()</code>, <code>nn.ReLU()</code> activation
+                    functions</span>
+            </div>
+            <div class="imp-item">
+                <span class="imp-num">03</span>
+                <span class="imp-text">Use built-in <code>nn.BCELoss()</code> loss function</span>
+            </div>
+            <div class="imp-item">
+                <span class="imp-num">04</span>
+                <span class="imp-text">Use built-in <code>torch.optim.SGD()</code> / <code>Adam</code> optimizer</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 2. THE nn MODULE -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section>
+        <h2><span class="icon">📦</span> The torch.nn Module</h2>
+
+        <div class="card">
+            <p style="color:var(--muted); font-size:13px;">
+                <code style="font-family:'JetBrains Mono',monospace; color:var(--accent5);">torch.nn</code> is a core
+                library providing classes and functions to build neural networks efficiently. It abstracts away the
+                complexity of creating and training networks by offering <strong style="color:var(--text)">pre-built
+                    layers, loss functions, activation functions,</strong> and other utilities.
+            </p>
+        </div>
+
+        <h3>Key Components</h3>
+        <div class="card-grid">
+            <div class="card-sm">
+                <div class="card-title">① Modules / Layers</div>
+                <p><code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent5);font-size:11px;">nn.Module</code>
+                    — base class for all models.<br>
+                    Common: <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.Linear</code>,
+                    <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.Conv2d</code>,
+                    <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.LSTM</code>
+                </p>
+            </div>
+            <div class="card-sm">
+                <div class="card-title">② Activation Functions</div>
+                <p><code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.ReLU</code>,
+                    <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.Sigmoid</code>,
+                    <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.Tanh</code>
+                    — introduce non-linearities</p>
+            </div>
+            <div class="card-sm">
+                <div class="card-title">③ Loss Functions</div>
+                <p><code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.BCELoss</code>,
+                    <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.MSELoss</code>,
+                    <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.CrossEntropyLoss</code>
+                </p>
+            </div>
+            <div class="card-sm">
+                <div class="card-title">④ Container Modules</div>
+                <p><code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.Sequential</code>
+                    — stack layers in order</p>
+            </div>
+            <div class="card-sm">
+                <div class="card-title">⑤ Regularization</div>
+                <p><code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.Dropout</code>,
+                    <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;">nn.BatchNorm2d</code>
+                    — prevent overfitting</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 3. MODEL DEFINITIONS -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section>
+        <h2><span class="icon">🏗️</span> Model Definitions</h2>
+
+        <div class="two-col">
+            <!-- Simple 1-layer model -->
+            <div>
+                <h3>Simple Model (1 Linear Layer)</h3>
+                <pre><span class="cm"># input: 5 features → output: 1</span>
+<span class="kw">import</span> <span class="builtin">torch</span>
+<span class="kw">import</span> <span class="builtin">torch.nn</span> <span class="kw">as</span> <span class="builtin">nn</span>
+
+<span class="kw">class</span> <span class="cls">Model</span>(<span class="cls">nn.Module</span>):
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="param">self</span>, num_features):
+        <span class="fn">super</span>().__init__()
+        <span class="param">self</span>.linear = <span class="cls">nn.Linear</span>(num_features, <span class="num">1</span>)
+        <span class="param">self</span>.sigmoid = <span class="cls">nn.Sigmoid</span>()
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="param">self</span>, features):
+        out = <span class="param">self</span>.linear(features)
+        out = <span class="param">self</span>.sigmoid(out)
+        <span class="kw">return</span> out
+
+<span class="cm"># Create & run</span>
+features = <span class="builtin">torch</span>.rand(<span class="num">10</span>, <span class="num">5</span>)
+model = <span class="cls">Model</span>(features.shape[<span class="num">1</span>])
+model(features)   <span class="cm"># preferred over model.forward()</span></pre>
+                <div class="callout warn"><strong>⚠️ Note:</strong> Always call <code>model(x)</code>, NOT
+                    <code>model.forward(x)</code> directly — PyTorch hooks run only via <code>__call__</code>.</div>
+            </div>
+
+            <!-- 2-layer model -->
+            <div>
+                <h3>Improved Model v1 (2 Linear Layers)</h3>
+                <pre><span class="kw">class</span> <span class="cls">Model</span>(<span class="cls">nn.Module</span>):
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="param">self</span>, num_features):
+        <span class="fn">super</span>().__init__()
+        <span class="cm"># Layer 1: features → 3</span>
+        <span class="param">self</span>.linear1 = <span class="cls">nn.Linear</span>(num_features, <span class="num">3</span>)
+        <span class="param">self</span>.relu    = <span class="cls">nn.ReLU</span>()
+        <span class="cm"># Layer 2: 3 → 1</span>
+        <span class="param">self</span>.linear2 = <span class="cls">nn.Linear</span>(<span class="num">3</span>, <span class="num">1</span>)
+        <span class="param">self</span>.sigmoid = <span class="cls">nn.Sigmoid</span>()
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="param">self</span>, features):
+        out = <span class="param">self</span>.linear1(features)
+        out = <span class="param">self</span>.relu(out)
+        out = <span class="param">self</span>.linear2(out)
+        out = <span class="param">self</span>.sigmoid(out)
+        <span class="kw">return</span> out</pre>
+            </div>
+        </div>
+
+        <!-- Sequential -->
+        <h3>Improved Code v2 — <code
+                style="font-family:'JetBrains Mono',monospace; color:var(--accent5);">nn.Sequential</code> (Cleaner
+            Syntax)</h3>
+        <pre><span class="kw">class</span> <span class="cls">Model</span>(<span class="cls">nn.Module</span>):
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="param">self</span>, num_features):
+        <span class="fn">super</span>().__init__()
+        <span class="param">self</span>.network = <span class="cls">nn.Sequential</span>(
+            <span class="cls">nn.Linear</span>(num_features, <span class="num">3</span>),
+            <span class="cls">nn.ReLU</span>(),
+            <span class="cls">nn.Linear</span>(<span class="num">3</span>, <span class="num">1</span>),
+            <span class="cls">nn.Sigmoid</span>()
+        )
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="param">self</span>, features):
+        out = <span class="param">self</span>.network(features)
+        <span class="kw">return</span> out</pre>
+        <div class="callout tip"><strong>✅ Benefit:</strong> <code>nn.Sequential</code> eliminates manually wiring each
+            layer in <code>forward()</code> — cleaner and less error-prone.</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 4. MODEL INSPECTION + TORCHINFO -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section>
+        <h2><span class="icon">🔍</span> Model Inspection & torchinfo</h2>
+
+        <div class="two-col">
+            <div>
+                <h3>Inspect Weights & Bias</h3>
+                <pre><span class="cm"># 1-layer model weights</span>
+model.linear.weight
+<span class="cm"># → tensor([[0.0498, 0.2991, 0.3265,</span>
+<span class="cm">#           0.2196, -0.3644]], requires_grad=True)</span>
+
+model.linear.bias
+<span class="cm"># → tensor([-0.1312], requires_grad=True)</span>
+
+<span class="cm"># 2-layer model weights</span>
+model.linear1.weight  <span class="cm"># shape: [3, 5]</span>
+model.linear2.weight  <span class="cm"># shape: [1, 3]</span></pre>
+            </div>
+            <div>
+                <h3>torchinfo Summary</h3>
+                <pre><span class="kw">from</span> <span class="builtin">torchinfo</span> <span class="kw">import</span> summary
+
+summary(model, input_size=(<span class="num">10</span>, <span class="num">5</span>))</pre>
+                <div class="summary-box">
+                    <span class="layer">Layer (type:depth) Output Shape Param #</span>
+                    ══════════════════════════════════════════════
+                    Model [10, 1] --
+                    ├─<span class="layer">Linear: 1-1</span> [10, 3] <span class="param-count">18</span>
+                    ├─<span class="layer">ReLU: 1-2</span> [10, 3] --
+                    ├─<span class="layer">Linear: 1-3</span> [10, 1] <span class="param-count">4</span>
+                    └─<span class="layer">Sigmoid: 1-4</span> [10, 1] --
+                    ══════════════════════════════════════════════
+                    <span class="total">Total params: 22 | Trainable: 22</span>
+                </div>
+                <div class="callout info">Linear 1-1: (5×3) + 3 bias = <strong>18</strong> &nbsp;|&nbsp; Linear 1-3:
+                    (3×1) + 1 bias = <strong>4</strong></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 5. TRAINING LOOP COMPARISON -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section>
+        <h2><span class="icon">🔄</span> Training Loop — Old vs New Style</h2>
+
+        <div class="two-col">
+            <div>
+                <h3><span class="badge old">OLD</span> Manual Weight Update</h3>
+                <pre><span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(epochs):
+
+    <span class="cm"># 1. Forward pass</span>
+    y_pred = model(X_train_tensor)
+
+    <span class="cm"># 2. Loss</span>
+    loss = model.loss_function(y_pred, y)
+
+    <span class="cm"># 3. Backward</span>
+    loss.backward()
+
+    <span class="cm"># 4. Manual update ← tedious</span>
+    <span class="kw">with</span> <span class="builtin">torch</span>.no_grad():
+        model.linear.weight -= lr * \
+            model.linear.weight.grad
+        model.linear.bias -= lr * \
+            model.linear.bias.grad
+
+    <span class="cm"># 5. Zero gradients</span>
+    model.linear.weight.grad.zero_()
+    model.linear.bias.grad.zero_()</pre>
+                <div class="callout warn"><strong>Problem:</strong> Must manually update each parameter. Doesn't scale
+                    to deep networks.</div>
+            </div>
+
+            <div>
+                <h3><span class="badge new">NEW</span> torch.optim Optimizer</h3>
+                <pre><span class="cm"># Setup (once)</span>
+loss_function = <span class="cls">nn.BCELoss</span>()
+optimizer = <span class="builtin">torch</span>.optim.<span class="fn">SGD</span>(
+    model.parameters(), lr=learning_rate
+)
+
+<span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(epochs):
+
+    <span class="cm"># 1. Forward pass</span>
+    y_pred = model(X_train_tensor)
+
+    <span class="cm"># 2. Loss (.view(-1,1) fixes shape)</span>
+    loss = loss_function(
+        y_pred, y_train_tensor.view(<span class="num">-1</span>, <span class="num">1</span>)
+    )
+
+    <span class="cm"># 3. Clear gradients ← BEFORE backward</span>
+    optimizer.zero_grad()
+
+    <span class="cm"># 4. Backward pass</span>
+    loss.backward()
+
+    <span class="cm"># 5. Update all parameters</span>
+    optimizer.step()
+
+    <span class="fn">print</span>(<span class="str">f'Epoch: </span>{epoch+<span class="num">1</span>}<span class="str">, Loss: </span>{loss.item()}<span class="str">'</span>)</pre>
+            </div>
+        </div>
+
+        <div class="callout tip" style="margin-top:0.5rem;">
+            <strong>✅ Correct order:</strong> <code>zero_grad()</code> → <code>backward()</code> →
+            <code>optimizer.step()</code> — zero grads BEFORE backward to avoid gradient accumulation from previous
+            batch.
+        </div>
+
+        <!-- Sample output -->
+        <h3>Sample Training Output</h3>
+        <pre><span class="out">Epoch: 1, Loss: 0.9751704931259155</span>
+<span class="out">Epoch: 2, Loss: 0.6611866695098877</span>
+<span class="out">Epoch: 3, Loss: 0.5049306750297546</span>
+<span class="out">Epoch: 4, Loss: 0.4231965541839599</span>
+<span class="cm"># Loss decreasing rapidly → optimizer working correctly</span></pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 6. torch.optim MODULE -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section>
+        <h2><span class="icon">⚙️</span> The torch.optim Module</h2>
+
+        <div class="card">
+            <p style="color:var(--muted);font-size:13px;">
+                <code style="font-family:'JetBrains Mono',monospace;color:var(--accent5);">torch.optim</code> provides a
+                variety of optimization algorithms to update model parameters during training. It handles weight updates
+                efficiently, including features like <strong style="color:var(--text)">learning rate scheduling</strong>
+                and <strong style="color:var(--text)">weight decay (regularization)</strong>.
+            </p>
+        </div>
+
+        <div class="two-col" style="margin-top:0.75rem;">
+            <div>
+                <h3>model.parameters()</h3>
+                <div class="card" style="font-size:13px;">
+                    Returns an <strong>iterator</strong> over all trainable parameters (weights and biases) — instances
+                    of <code
+                        style="font-family:'JetBrains Mono',monospace;color:var(--accent5);">torch.nn.Parameter</code>:
+                    <ul style="margin: 0.5rem 0 0 1.2rem; color:var(--muted);">
+                        <li><strong style="color:var(--text)">Weights</strong> — weight matrices of layers like <code
+                                style="font-family:'JetBrains Mono',monospace;font-size:11px;">nn.Linear</code></li>
+                        <li><strong style="color:var(--text)">Biases</strong> — bias terms of layers</li>
+                    </ul>
+                    <br>The optimizer uses these to compute gradients and update them during training.
+                </div>
+            </div>
+            <div>
+                <h3>Common Optimizers</h3>
+                <table>
+                    <tr>
+                        <th>Optimizer</th>
+                        <th>Usage</th>
+                    </tr>
+                    <tr>
+                        <td><code>torch.optim.SGD</code></td>
+                        <td>Stochastic Gradient Descent</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.optim.Adam</code></td>
+                        <td>Adaptive Moment Estimation</td>
+                    </tr>
+                    <tr>
+                        <td><code>torch.optim.RMSprop</code></td>
+                        <td>Root Mean Square Propagation</td>
+                    </tr>
+                </table>
+                <pre style="margin-top:0.5rem;"><span class="cm"># SGD Example</span>
+optimizer = <span class="builtin">torch</span>.optim.<span class="fn">SGD</span>(
+    model.parameters(),
+    lr=learning_rate   <span class="cm"># e.g. 0.1</span>
+)</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 7. QUICK REFERENCE -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section>
+        <h2><span class="icon">📋</span> Quick Reference</h2>
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Old Way (Manual)</th>
+                <th>New Way (nn module)</th>
+            </tr>
+            <tr>
+                <td>Network</td>
+                <td>Raw weight matrices + matmul</td>
+                <td><code>class Model(nn.Module)</code></td>
+            </tr>
+            <tr>
+                <td>Activation</td>
+                <td>Custom sigmoid function</td>
+                <td><code>nn.Sigmoid()</code>, <code>nn.ReLU()</code></td>
+            </tr>
+            <tr>
+                <td>Loss</td>
+                <td>Manual BCE formula</td>
+                <td><code>nn.BCELoss()</code></td>
+            </tr>
+            <tr>
+                <td>Optimizer</td>
+                <td>Manual <code>weight -= lr * grad</code></td>
+                <td><code>torch.optim.SGD(model.parameters(), lr=...)</code></td>
+            </tr>
+            <tr>
+                <td>Zero grad</td>
+                <td><code>weight.grad.zero_()</code> per param</td>
+                <td><code>optimizer.zero_grad()</code></td>
+            </tr>
+            <tr>
+                <td>Update</td>
+                <td>Manual <code>torch.no_grad()</code> block</td>
+                <td><code>optimizer.step()</code></td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- FOOTER -->
+    <div
+        style="border-top:1px solid var(--border); padding-top:1rem; margin-top:1rem; font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; display:flex; justify-content:space-between;">
+        <span>PyTorch NN Module · Video 5 · CampusX</span>
+        <span>Sets 1 + 2 · 29 screenshots</span>
+    </div>
+
+</body>
+
+</html>
