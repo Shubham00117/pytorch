@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset & DataLoader in PyTorch — CampusX V6 + V7</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --card: #1a1e2a;
+            --border: #252b3b;
+            --accent: #4f8ef7;
+            --green: #3ecf8e;
+            --yellow: #f0c060;
+            --red: #f06060;
+            --purple: #a78bfa;
+            --text: #d4daf0;
+            --muted: #6b7599;
+            --code-bg: #0a0c12;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            border-left: 4px solid var(--accent);
+            padding: 20px 24px;
+            background: var(--surface);
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .header .sub {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-right: 6px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.green {
+            background: var(--green);
+            color: #0a0c12;
+        }
+
+        .badge.yellow {
+            background: var(--yellow);
+            color: #0a0c12;
+        }
+
+        .badge.purple {
+            background: var(--purple);
+            color: #0a0c12;
+        }
+
+        /* Section */
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Code */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            margin: 12px 0;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+        }
+
+        .inline-code {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.83em;
+            color: var(--green);
+        }
+
+        /* Syntax highlight */
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .st {
+            color: #c3e88d;
+        }
+
+        .num {
+            color: var(--yellow);
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        /* Grid */
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 640px) {
+
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .card-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            font-size: 0.87rem;
+            color: var(--text);
+        }
+
+        /* Info boxes */
+        .info-box {
+            border-left: 3px solid var(--accent);
+            background: rgba(79, 142, 247, 0.07);
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+
+        .info-box.green {
+            border-color: var(--green);
+            background: rgba(62, 207, 142, 0.07);
+        }
+
+        .info-box.yellow {
+            border-color: var(--yellow);
+            background: rgba(240, 192, 96, 0.07);
+        }
+
+        .info-box.red {
+            border-color: var(--red);
+            background: rgba(240, 96, 96, 0.07);
+        }
+
+        .info-box.purple {
+            border-color: var(--purple);
+            background: rgba(167, 139, 250, 0.07);
+        }
+
+        /* Flow diagram */
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 14px 0;
+        }
+
+        .flow-node {
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .flow-node.green {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .flow-node.yellow {
+            border-color: var(--yellow);
+            color: var(--yellow);
+        }
+
+        .flow-node.purple {
+            border-color: var(--purple);
+            color: var(--purple);
+        }
+
+        .flow-arrow {
+            color: var(--muted);
+            font-size: 1.1rem;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.87rem;
+        }
+
+        th {
+            background: var(--surface);
+            color: var(--accent);
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* List */
+        ul {
+            padding-left: 18px;
+            margin: 8px 0;
+        }
+
+        li {
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* Divider */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 20px 0;
+        }
+
+        /* Step list */
+        .steps {
+            counter-reset: step;
+        }
+
+        .step {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            min-width: 26px;
+            height: 26px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-num.green {
+            background: var(--green);
+            color: #0a0c12;
+        }
+
+        .step-num.yellow {
+            background: var(--yellow);
+            color: #0a0c12;
+        }
+
+        .step-body {
+            font-size: 0.9rem;
+            padding-top: 3px;
+        }
+
+        /* Video tag */
+        .vid-tag {
+            font-size: 0.72rem;
+            color: var(--muted);
+            float: right;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <span class="badge">Video 6</span>
+                <span class="badge yellow">CampusX</span>
+            </div>
+            <h1>Dataset & DataLoader in PyTorch</h1>
+            <div class="sub">Efficient data loading · batching · parallelization · end-to-end pipeline</div>
+        </div>
+
+        <!-- 1. RECAP -->
+        <div class="section">
+            <div class="section-title">Course Roadmap Recap</div>
+            <div class="flow">
+                <div class="flow-node">① Introduction</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node">② Tensors</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node">③ Autograd</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node yellow">④ Training Pipeline ✓</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node green">⑤ nn Module</div>
+            </div>
+            <div class="info-box red">
+                <strong>Problems with full-batch training:</strong> (1) Memory inefficient — loads all data at once
+                &nbsp; (2) Poor convergence — no stochastic gradient noise
+            </div>
+        </div>
+
+        <!-- 2. SIMPLE SOLUTION (manual batching) -->
+        <div class="section">
+            <div class="section-title">Simple Solution — Manual Batching</div>
+            <p style="font-size:0.9rem; margin-bottom:10px;">Loop over data in chunks manually, without DataLoader.</p>
+            <pre><span class="cm"># 320 samples / batch_size 32 = 10 batches per epoch</span>
+batch_size = <span class="num">32</span>
+epochs = <span class="num">25</span>
+n_samples = <span class="fn">len</span>(X_train_tensor)
+
+<span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(epochs):
+    <span class="kw">for</span> start_idx <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, n_samples, batch_size):
+        end_idx = start_idx + batch_size
+        X_batch = X_train_tensor[start_idx:end_idx]
+        y_batch = y_train_tensor[start_idx:end_idx]
+
+        y_pred = model(X_batch)
+        loss = loss_function(y_pred, y_batch.<span class="fn">view</span>(<span class="num">-1</span>, <span class="num">1</span>))
+        optimizer.<span class="fn">zero_grad</span>()
+        loss.<span class="fn">backward</span>()
+        optimizer.<span class="fn">step</span>()
+    <span class="fn">print</span>(<span class="st">f"Epoch: </span>{epoch+<span class="num">1</span>}<span class="st">, Loss: </span>{loss.<span class="fn">item</span>()}<span class="st">"</span>)</pre>
+            <div class="info-box yellow">Problem: Manual, no shuffling, no parallelism → use <strong>Dataset +
+                    DataLoader</strong> instead.</div>
+        </div>
+
+        <!-- 3. DATASET & DATALOADER CONCEPTS -->
+        <div class="section">
+            <div class="section-title">Dataset & DataLoader — Core Concept</div>
+            <div class="info-box">
+                <strong>Key Idea:</strong> Dataset and DataLoader are core abstractions that <em>decouple</em> how you
+                define your data from how you efficiently iterate over it in training loops.
+            </div>
+            <div class="grid2" style="margin-top:16px;">
+                <div class="card">
+                    <div class="card-title" style="color:var(--green)">Dataset Class (Blueprint)</div>
+                    <p>Abstract class you subclass to define data. Must implement:</p>
+                    <ul>
+                        <li><span class="inline-code">__init__</span> — how data is loaded</li>
+                        <li><span class="inline-code">__len__</span> — total number of samples</li>
+                        <li><span class="inline-code">__getitem__(index)</span> — return (feature, label) at index</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="color:var(--yellow)">DataLoader Class (Iterator)</div>
+                    <p>Wraps a Dataset and handles:</p>
+                    <ul>
+                        <li>Batching into chunks of <span class="inline-code">batch_size</span></li>
+                        <li>Shuffling indices each epoch</li>
+                        <li>Parallel loading via <span class="inline-code">num_workers</span></li>
+                        <li>Combining samples via <span class="inline-code">collate_fn</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. DATALOADER CONTROL FLOW -->
+        <div class="section">
+            <div class="section-title">DataLoader Control Flow (per epoch)</div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">Sampler generates a shuffled list of all indices (if <span
+                            class="inline-code">shuffle=True</span>)</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">Indices are divided into chunks of <span
+                            class="inline-code">batch_size</span> — e.g. [4,6] [1,3] [7,8] [2,0] [9,5]</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">For each chunk, <span class="inline-code">__getitem__</span> is called per
+                        index → fetches (feature, label) from Dataset</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-body"><span class="inline-code">collate_fn</span> stacks individual samples into a
+                        single batch tensor</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <div class="step-body">Batch is returned to the training loop → batch1, batch2, …, batchN</div>
+                </div>
+                <div class="step">
+                    <div class="step-num" style="background:var(--muted)">6</div>
+                    <div class="step-body">Epoch ends when all indices are consumed. Next epoch reshuffles and repeats.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. CUSTOM DATASET CODE -->
+        <div class="section">
+            <div class="section-title">CustomDataset Implementation</div>
+            <pre><span class="kw">from</span> torch.utils.data <span class="kw">import</span> <span class="cls">Dataset</span>, <span class="cls">DataLoader</span>
+
+<span class="kw">class</span> <span class="cls">CustomDataset</span>(<span class="cls">Dataset</span>):   <span class="cm"># inherit from abstract Dataset</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, features, labels):
+        self.features = features
+        self.labels   = labels
+
+    <span class="kw">def</span> <span class="fn">__len__</span>(self):
+        <span class="kw">return</span> self.features.shape[<span class="num">0</span>]   <span class="cm"># total rows</span>
+
+    <span class="kw">def</span> <span class="fn">__getitem__</span>(self, index):
+        <span class="kw">return</span> self.features[index], self.labels[index]
+
+<span class="cm"># Instantiate</span>
+dataset    = <span class="cls">CustomDataset</span>(X, y)
+<span class="fn">len</span>(dataset)      <span class="cm"># → 10</span>
+dataset[<span class="num">2</span>]        <span class="cm"># → (tensor([-2.8954, 1.9769]), tensor(0))</span>
+
+<span class="cm"># Wrap in DataLoader</span>
+dataloader = <span class="cls">DataLoader</span>(dataset, batch_size=<span class="num">2</span>, shuffle=<span class="kw">True</span>)
+
+<span class="kw">for</span> batch_features, batch_labels <span class="kw">in</span> dataloader:
+    <span class="fn">print</span>(batch_features)
+    <span class="fn">print</span>(batch_labels)</pre>
+        </div>
+
+        <!-- 6. DATALOADER IMPORTANT PARAMETERS -->
+        <div class="section">
+            <div class="section-title">DataLoader — Important Parameters</div>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Default</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">dataset</span></td>
+                    <td><em>required</em></td>
+                    <td>Subclass of <span class="inline-code">torch.utils.data.Dataset</span>; must have <span
+                            class="inline-code">__getitem__</span> & <span class="inline-code">__len__</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">batch_size</span></td>
+                    <td>1</td>
+                    <td>Samples per batch. Larger = faster GPU training but more memory.</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">shuffle</span></td>
+                    <td>False</td>
+                    <td>Shuffles indices every epoch → prevents order-dependency</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">num_workers</span></td>
+                    <td>0</td>
+                    <td>Worker processes for parallel data loading. >0 leverages multiple CPU cores.</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">pin_memory</span></td>
+                    <td>False</td>
+                    <td>Copies tensors to pinned (page-locked) memory → faster GPU transfer on CUDA</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">drop_last</span></td>
+                    <td>False</td>
+                    <td>Drops final incomplete batch if <span class="inline-code">n_samples % batch_size ≠ 0</span>
+                        (needed for BatchNorm)</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">collate_fn</span></td>
+                    <td>default stack</td>
+                    <td>Custom function to combine samples → useful for variable-length sequences (NLP)</td>
+                </tr>
+                <tr>
+                    <td><span class="inline-code">sampler</span></td>
+                    <td>—</td>
+                    <td>Controls index-drawing strategy. Overrides <span class="inline-code">shuffle</span>.</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 7. SAMPLERS -->
+        <div class="section">
+            <div class="section-title">Samplers</div>
+            <div class="grid2">
+                <div class="card">
+                    <div class="card-title">SequentialSampler</div>
+                    <p>Draws indices in order 0,1,2,…N<br>Default when <span class="inline-code">shuffle=False</span>
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="color:var(--green)">RandomSampler</div>
+                    <p>Draws indices randomly without replacement<br>Default when <span
+                            class="inline-code">shuffle=True</span></p>
+                </div>
+            </div>
+            <div class="info-box purple" style="margin-top:12px;">
+                <strong>Custom Samplers</strong> — useful for: imbalanced datasets (e.g. 1% vs 99% class split),
+                time-series data where order matters, stratified sampling.
+            </div>
+        </div>
+
+        <!-- 8. PARALLELIZATION -->
+        <div class="section">
+            <div class="section-title">Parallelization with num_workers</div>
+            <div class="info-box yellow">Example: 10,000 samples · batch_size=32 · num_workers=4 → ~312 batches</div>
+            <div class="steps" style="margin-top:14px;">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body"><strong>Sampler</strong> generates shuffled indices → groups into 312 batches
+                        of 32. Queued for workers.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body"><strong>Parallel Loading:</strong> 4 workers each fetch 1 batch
+                        simultaneously — each calls <span class="inline-code">__getitem__</span>, applies transforms,
+                        runs <span class="inline-code">collate_fn</span>.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body"><strong>First batch returned:</strong> Whichever worker finishes first yields
+                        its batch to the training loop.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-body"><strong>Model trains</strong> on batch 1 while workers 2/3/4 are already
+                        loading batches 2/3/4 — pipeline effect.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <div class="step-body"><strong>Continuous:</strong> Finished worker immediately grabs batch 5 from
+                        queue. At any moment, up to 4 batches being prepared.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num" style="background:var(--muted)">7</div>
+                    <div class="step-body"><strong>End of epoch:</strong> All 312 batches consumed → DataLoader
+                        exhausted. If <span class="inline-code">shuffle=True</span>, reshuffles and repeats.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 9. DATA TRANSFORMATIONS -->
+        <div class="section">
+            <div class="section-title">Data Transformations</div>
+            <p style="font-size:0.9rem; margin-bottom:12px;"><span class="inline-code">__getitem__</span> is the
+                transformation hook — apply transforms here before returning data.</p>
+            <div class="grid2">
+                <div class="card">
+                    <div class="card-title">Image Data</div>
+                    <ul>
+                        <li>Resize</li>
+                        <li>Grayscale / normalize</li>
+                        <li>Data augmentation (flip, crop)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-title">Text Data</div>
+                    <ul>
+                        <li>Tokenization</li>
+                        <li>Lemmatization</li>
+                        <li>Stemming</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box" style="margin-top:12px;">collate_fn handles variable-length sequences (e.g., sentences
+                tokenized to different lengths → pad to same length before stacking).</div>
+        </div>
+
+        <!-- 10. FULL PIPELINE — BREAST CANCER -->
+        <div class="section">
+            <div class="section-title">Full Pipeline — Breast Cancer Dataset <span class="vid-tag">Video 6 End-to-End
+                    Demo</span></div>
+            <div class="flow" style="margin-bottom:16px;">
+                <div class="flow-node green">Load CSV</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node">Drop cols</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node">Train/Test Split</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node yellow">StandardScaler</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node yellow">LabelEncoder</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node green">Tensors</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node purple">CustomDataset</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node purple">DataLoader</div>
+            </div>
+            <pre><span class="cm"># Data prep</span>
+df = pd.<span class="fn">read_csv</span>(<span class="st">'...'</span>)
+df.<span class="fn">drop</span>(columns=[<span class="st">'id'</span>, <span class="st">'Unnamed: 32'</span>], inplace=<span class="kw">True</span>)
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
+    df.iloc[:, <span class="num">1</span>:], df.iloc[:, <span class="num">0</span>], test_size=<span class="num">0.2</span>)
+
+scaler  = <span class="cls">StandardScaler</span>()
+X_train = scaler.<span class="fn">fit_transform</span>(X_train)
+X_test  = scaler.<span class="fn">transform</span>(X_test)
+
+encoder = <span class="cls">LabelEncoder</span>()              <span class="cm"># M→1, B→0</span>
+y_train = encoder.<span class="fn">fit_transform</span>(y_train)
+y_test  = encoder.<span class="fn">transform</span>(y_test)
+
+<span class="cm"># To tensors (455 × 30)</span>
+X_train_tensor = torch.<span class="fn">from_numpy</span>(X_train.astype(np.float32))
+y_train_tensor = torch.<span class="fn">from_numpy</span>(y_train.astype(np.float32))
+
+<span class="cm"># Dataset & DataLoader</span>
+train_dataset = <span class="cls">CustomDataset</span>(X_train_tensor, y_train_tensor)
+test_dataset  = <span class="cls">CustomDataset</span>(X_test_tensor,  y_test_tensor)
+
+train_loader = <span class="cls">DataLoader</span>(train_dataset, batch_size=<span class="num">32</span>, shuffle=<span class="kw">True</span>)
+test_loader  = <span class="cls">DataLoader</span>(test_dataset,  batch_size=<span class="num">32</span>, shuffle=<span class="kw">True</span>)</pre>
+
+            <hr class="divider">
+            <strong style="font-size:0.9rem; color: var(--accent);">Model</strong>
+            <pre><span class="kw">class</span> <span class="cls">MySimpleNN</span>(nn.<span class="cls">Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, num_features):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.linear  = nn.<span class="cls">Linear</span>(num_features, <span class="num">1</span>)
+        self.sigmoid = nn.<span class="cls">Sigmoid</span>()
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, features):
+        out = self.<span class="fn">linear</span>(features)
+        <span class="kw">return</span> self.<span class="fn">sigmoid</span>(out)
+
+model          = <span class="cls">MySimpleNN</span>(X_train_tensor.shape[<span class="num">1</span>])
+optimizer      = torch.optim.<span class="cls">SGD</span>(model.<span class="fn">parameters</span>(), lr=<span class="num">0.1</span>)
+loss_function  = nn.<span class="cls">BCELoss</span>()</pre>
+
+            <strong style="font-size:0.9rem; color: var(--accent);">Training Loop</strong>
+            <pre><span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(<span class="num">25</span>):
+    <span class="kw">for</span> batch_features, batch_labels <span class="kw">in</span> train_loader:
+        y_pred = model(batch_features)
+        loss   = loss_function(y_pred, batch_labels.<span class="fn">view</span>(<span class="num">-1</span>, <span class="num">1</span>))
+        optimizer.<span class="fn">zero_grad</span>()
+        loss.<span class="fn">backward</span>()
+        optimizer.<span class="fn">step</span>()
+    <span class="fn">print</span>(<span class="st">f"Epoch: </span>{epoch+<span class="num">1</span>}<span class="st">, Loss: </span>{loss.<span class="fn">item</span>()}<span class="st">"</span>)</pre>
+
+            <strong style="font-size:0.9rem; color: var(--accent);">Evaluation</strong>
+            <pre>model.<span class="fn">eval</span>()
+accuracy_list = []
+<span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+    <span class="kw">for</span> batch_features, batch_labels <span class="kw">in</span> test_loader:
+        y_pred       = model(batch_features)
+        y_pred       = (y_pred > <span class="num">0.8</span>).<span class="fn">float</span>()    <span class="cm"># threshold</span>
+        batch_acc    = (y_pred.<span class="fn">view</span>(<span class="num">-1</span>) == batch_labels).<span class="fn">float</span>().<span class="fn">mean</span>().<span class="fn">item</span>()
+        accuracy_list.<span class="fn">append</span>(batch_acc)
+
+overall_accuracy = <span class="fn">sum</span>(accuracy_list) / <span class="fn">len</span>(accuracy_list)
+<span class="fn">print</span>(<span class="st">f"Accuracy: </span>{overall_accuracy:.4f}<span class="st">"</span>)</pre>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center; color:var(--muted); font-size:0.78rem; margin-top:20px;">
+            CampusX PyTorch Series · Video 6 — Dataset & DataLoader
+        </div>
+
+    </div>
+</body>
+
+</html>
