@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Training on GPU — Video 8 | CampusX</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #1c2330;
+            --border: #30363d;
+            --accent: #58a6ff;
+            --accent2: #3fb950;
+            --accent3: #f78166;
+            --accent4: #d2a8ff;
+            --accent5: #ffa657;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --text-dim: #484f58;
+            --tag-bg: #1f2937;
+            --code-bg: #0d1117;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+            padding: 0 0 80px;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a2236 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 52px 40px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 80% at 90% 20%, rgba(88, 166, 255, .08) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 60% at 10% 80%, rgba(63, 185, 80, .06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(88, 166, 255, .12);
+            border: 1px solid rgba(88, 166, 255, .3);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+            letter-spacing: .5px;
+        }
+
+        .badge::before {
+            content: '▶';
+            font-size: 9px;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(24px, 4vw, 38px);
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.15;
+            max-width: 700px;
+            margin-bottom: 14px;
+        }
+
+        h1 span {
+            color: var(--accent);
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hero-meta span::before {
+            opacity: .5;
+        }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px 0;
+        }
+
+        /* ── SECTION HEADER ── */
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            margin: 48px 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: attr(data-icon);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        /* ── RECAP CARD ── */
+        .recap-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        @media(max-width: 600px) {
+            .recap-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--card-accent, var(--accent));
+            border-radius: 3px 0 0 3px;
+        }
+
+        .info-card h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--card-accent, var(--accent));
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .info-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .info-card strong {
+            color: var(--text);
+        }
+
+        .dataset-vis {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 16px;
+        }
+
+        .dataset-vis h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            margin-bottom: 16px;
+        }
+
+        .ds-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .ds-label {
+            width: 110px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .ds-track {
+            flex: 1;
+            background: var(--surface2);
+            border-radius: 4px;
+            height: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .ds-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .ds-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text);
+            width: 60px;
+            text-align: right;
+        }
+
+        /* ── STEPS ── */
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .step-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+
+        .step-card:hover {
+            border-color: var(--step-color, var(--accent));
+        }
+
+        .step-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px 20px 16px;
+        }
+
+        .step-num {
+            background: var(--step-color, var(--accent));
+            color: #000;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 13px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .step-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .step-code {
+            padding: 0 20px 20px;
+        }
+
+        /* ── CODE BLOCK ── */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: .5px;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .code-dots span:nth-child(1) {
+            background: #ff5f57;
+        }
+
+        .code-dots span:nth-child(2) {
+            background: #febc2e;
+        }
+
+        .code-dots span:nth-child(3) {
+            background: #28c840;
+        }
+
+        pre {
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.65;
+            overflow-x: auto;
+            color: var(--text);
+            white-space: pre;
+        }
+
+        .kw {
+            color: #ff7b72;
+        }
+
+        /* keywords: import, for, with, def, class, if, else, return */
+        .fn {
+            color: #d2a8ff;
+        }
+
+        /* functions */
+        .str {
+            color: #a5d6ff;
+        }
+
+        /* strings */
+        .cm {
+            color: #8b949e;
+            font-style: italic;
+        }
+
+        /* comments */
+        .num {
+            color: #f2cc60;
+        }
+
+        /* numbers/True/False */
+        .cls {
+            color: #ffa657;
+        }
+
+        /* class names */
+
+        /* ── OPTIMIZATION GRID ── */
+        .opt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media(max-width: 600px) {
+            .opt-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .opt-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .opt-label {
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .opt-label .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--opt-color, var(--accent));
+        }
+
+        .opt-desc {
+            padding: 12px 16px 4px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .opt-code-wrap {
+            padding: 4px 16px 16px;
+        }
+
+        /* ── RESULT BANNER ── */
+        .result-banner {
+            background: linear-gradient(135deg, rgba(63, 185, 80, .12), rgba(63, 185, 80, .06));
+            border: 1px solid rgba(63, 185, 80, .35);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+
+        .result-badge {
+            font-family: 'Syne', sans-serif;
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--accent2);
+            line-height: 1;
+        }
+
+        .result-text h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .result-text p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ── ARCHITECTURE BOX ── */
+        .arch-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 2;
+        }
+
+        .arch-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .arch-layer {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 12px;
+            color: var(--text);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .arch-arrow {
+            color: var(--text-dim);
+            font-size: 16px;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center;
+            margin-top: 64px;
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="badge">CampusX · Video 8 · Deep Learning</div>
+        <h1>Neural Network Training<br><span>on GPU</span> with PyTorch</h1>
+        <div class="hero-meta">
+            <span>📦 Fashion MNIST</span>
+            <span>🔥 PyTorch + CUDA</span>
+            <span>🎯 88.98% Accuracy</span>
+            <span>📅 24 Dec 2024</span>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- ── RECAP ── -->
+        <div class="section-title" data-icon="📋">Recap</div>
+        <div class="recap-grid">
+            <div class="info-card" style="--card-accent: #58a6ff">
+                <h3>GPU vs CPU</h3>
+                <p>GPU offers a <strong>huge advantage</strong> for neural network training due to massive parallel
+                    computation — critical for matrix operations in deep learning.</p>
+            </div>
+            <div class="info-card" style="--card-accent: #ffa657">
+                <h3>Previous Result (CPU)</h3>
+                <p>Trained an ANN on Fashion MNIST using a <strong>6000-neuron model</strong> and achieved <strong>~83%
+                        accuracy</strong> on the test set.</p>
+            </div>
+        </div>
+        <div class="dataset-vis">
+            <h3>Fashion MNIST — Dataset Split</h3>
+            <div class="ds-bar">
+                <div class="ds-label">Total</div>
+                <div class="ds-track">
+                    <div class="ds-fill" style="width:100%;background:#58a6ff"></div>
+                </div>
+                <div class="ds-count">70,000</div>
+            </div>
+            <div class="ds-bar">
+                <div class="ds-label">Train</div>
+                <div class="ds-track">
+                    <div class="ds-fill" style="width:85.7%;background:#3fb950"></div>
+                </div>
+                <div class="ds-count">60,000</div>
+            </div>
+            <div class="ds-bar">
+                <div class="ds-label">Test</div>
+                <div class="ds-track">
+                    <div class="ds-fill" style="width:14.3%;background:#f78166"></div>
+                </div>
+                <div class="ds-count">10,000</div>
+            </div>
+        </div>
+
+        <!-- ── STEPS ── -->
+        <div class="section-title" data-icon="⚙️">Steps for GPU Training</div>
+        <div class="steps-list">
+
+            <!-- Step 1 -->
+            <div class="step-card" style="--step-color:#58a6ff">
+                <div class="step-header">
+                    <div class="step-num">1</div>
+                    <div class="step-info">
+                        <h3>Check GPU Availability</h3>
+                        <p>Detect if CUDA is available. If yes, use <code
+                                style="color:#a5d6ff;background:#1c2330;padding:1px 5px;border-radius:4px;font-size:12px">cuda</code>;
+                            otherwise fall back to <code
+                                style="color:#a5d6ff;background:#1c2330;padding:1px 5px;border-radius:4px;font-size:12px">cpu</code>.
+                        </p>
+                    </div>
+                </div>
+                <div class="step-code">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div><span
+                                class="code-lang">python</span>
+                        </div>
+                        <pre><span class="kw">import</span> torch
+
+<span class="cm"># Check for GPU</span>
+device = torch.device(<span class="str">'cuda'</span> <span class="kw">if</span> torch.cuda.is_available() <span class="kw">else</span> <span class="str">'cpu'</span>)
+<span class="fn">print</span>(<span class="str">f"Using device: {device}"</span>)</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step-card" style="--step-color:#d2a8ff">
+                <div class="step-header">
+                    <div class="step-num" style="background:#d2a8ff">2</div>
+                    <div class="step-info">
+                        <h3>Move the Model to GPU</h3>
+                        <p>Move your model to the selected device (<code
+                                style="color:#a5d6ff;background:#1c2330;padding:1px 5px;border-radius:4px;font-size:12px">cuda</code>
+                            or <code
+                                style="color:#a5d6ff;background:#1c2330;padding:1px 5px;border-radius:4px;font-size:12px">cpu</code>)
+                            so all computations occur on the same device.</p>
+                    </div>
+                </div>
+                <div class="step-code">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div><span
+                                class="code-lang">python</span>
+                        </div>
+                        <pre>model = <span class="cls">MyNN</span>(X_train.shape[<span class="num">1</span>])  <span class="cm"># instantiate model</span>
+model = model.<span class="fn">to</span>(device)          <span class="cm"># move model to GPU</span>
+
+criterion = nn.<span class="cls">CrossEntropyLoss</span>()
+optimizer = optim.<span class="cls">SGD</span>(model.<span class="fn">parameters</span>(), lr=learning_rate)</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step-card" style="--step-color:#ffa657">
+                <div class="step-header">
+                    <div class="step-num" style="background:#ffa657">3</div>
+                    <div class="step-info">
+                        <h3>Modify the Training Loop — Move Data to GPU</h3>
+                        <p>Each batch of features and labels must be moved to the GPU before processing. Both model and
+                            data must be on the same device.</p>
+                    </div>
+                </div>
+                <div class="step-code">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div><span
+                                class="code-lang">python</span>
+                        </div>
+                        <pre><span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(epochs):
+    total_epoch_loss = <span class="num">0</span>
+    <span class="kw">for</span> batch_features, batch_labels <span class="kw">in</span> train_loader:
+        <span class="cm"># Move data to GPU</span>
+        batch_features, batch_labels = \
+            batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+        <span class="cm"># Forward pass</span>
+        outputs = <span class="fn">model</span>(batch_features)
+        loss = <span class="fn">criterion</span>(outputs, batch_labels)
+        <span class="cm"># Back pass</span>
+        optimizer.<span class="fn">zero_grad</span>()
+        loss.<span class="fn">backward</span>()
+        optimizer.<span class="fn">step</span>()</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step-card" style="--step-color:#f78166">
+                <div class="step-header">
+                    <div class="step-num" style="background:#f78166">4</div>
+                    <div class="step-info">
+                        <h3>Modify the Evaluation Loop — Move Data to GPU</h3>
+                        <p>Same pattern for test data. Use <code
+                                style="color:#a5d6ff;background:#1c2330;padding:1px 5px;border-radius:4px;font-size:12px">torch.no_grad()</code>
+                            to disable gradient computation for efficiency.</p>
+                    </div>
+                </div>
+                <div class="step-code">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div><span
+                                class="code-lang">python</span>
+                        </div>
+                        <pre>total = <span class="num">0</span>; correct = <span class="num">0</span>
+
+<span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+    <span class="kw">for</span> batch_features, batch_labels <span class="kw">in</span> test_loader:
+        <span class="cm"># Move data to GPU</span>
+        batch_features, batch_labels = \
+            batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+        outputs = <span class="fn">model</span>(batch_features)
+        _, predicted = torch.<span class="fn">max</span>(outputs, <span class="num">1</span>)
+        total = total + batch_labels.shape[<span class="num">0</span>]
+        correct = correct + (predicted == batch_labels).<span class="fn">sum</span>().<span class="fn">item</span>()
+
+<span class="fn">print</span>(correct / total)</pre>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── OPTIMIZATIONS ── -->
+        <div class="section-title" data-icon="🚀">Step 5 — Optimize GPU Usage</div>
+        <div class="opt-grid">
+            <div class="opt-card">
+                <div class="opt-label" style="--opt-color:#3fb950">
+                    <div class="dot"></div>a. Use Larger Batch Sizes
+                </div>
+                <p class="opt-desc">Larger batches better utilise GPU memory and reduce computation time per epoch.</p>
+                <div class="opt-code-wrap">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div><span
+                                class="code-lang">python</span>
+                        </div>
+                        <pre>train_loader = <span class="cls">DataLoader</span>(
+    train_dataset,
+    batch_size=<span class="num">128</span>,
+    shuffle=<span class="num">True</span>,
+    pin_memory=<span class="num">True</span>
+)
+test_loader = <span class="cls">DataLoader</span>(
+    test_dataset,
+    batch_size=<span class="num">128</span>,
+    shuffle=<span class="num">False</span>,
+    pin_memory=<span class="num">True</span>
+)</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="opt-card">
+                <div class="opt-label" style="--opt-color:#58a6ff">
+                    <div class="dot" style="background:#58a6ff"></div>b. Enable DataLoader Pinning
+                </div>
+                <p class="opt-desc">Use <code
+                        style="color:#a5d6ff;background:#0d1117;padding:1px 5px;border-radius:4px;font-size:12px">pin_memory=True</code>
+                    to speed up CPU → GPU data transfer via pinned (page-locked) memory.</p>
+                <div class="opt-code-wrap">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div><span
+                                class="code-lang">python</span>
+                        </div>
+                        <pre>train_loader = <span class="cls">DataLoader</span>(
+    train_dataset,
+    batch_size=<span class="num">32</span>,
+    shuffle=<span class="num">True</span>,
+    pin_memory=<span class="num">True</span>  <span class="cm"># ← key</span>
+)</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MODEL ARCHITECTURE ── -->
+        <div class="section-title" data-icon="🧠">Model Architecture (MyNN)</div>
+        <div class="arch-box">
+            <div class="arch-row">
+                <div class="arch-layer">Input: 784</div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">Linear(784 → 128)</div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">ReLU</div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">Linear(128 → 64)</div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">ReLU</div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-layer">Linear(64 → 10)</div>
+            </div>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:var(--text-muted);padding:0 4px">
+            Loss: <code style="color:#d2a8ff;font-size:12px">CrossEntropyLoss</code> &nbsp;·&nbsp;
+            Optimizer: <code style="color:#d2a8ff;font-size:12px">SGD(lr=0.1)</code> &nbsp;·&nbsp;
+            Epochs: <code style="color:#f2cc60;font-size:12px">100</code> &nbsp;·&nbsp;
+            Batch size: <code style="color:#f2cc60;font-size:12px">32</code>
+        </div>
+
+        <!-- ── RESULT ── -->
+        <div class="result-banner">
+            <div class="result-badge">88.98%</div>
+            <div class="result-text">
+                <h3>Final Test Accuracy on GPU</h3>
+                <p>Compared to <strong>~83%</strong> on CPU — GPU training achieved higher accuracy within the same 100
+                    epochs, thanks to faster iterations and the ability to tune with larger batches.</p>
+            </div>
+        </div>
+
+        <!-- ── QUICK CHEATSHEET ── -->
+        <div class="section-title" data-icon="📝">Quick Cheatsheet</div>
+        <div class="code-block" style="margin-bottom: 16px">
+            <div class="code-header">
+                <div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">GPU Training
+                    Checklist</span>
+            </div>
+            <pre><span class="cm"># 1️⃣  Detect device</span>
+device = torch.device(<span class="str">'cuda'</span> <span class="kw">if</span> torch.cuda.is_available() <span class="kw">else</span> <span class="str">'cpu'</span>)
+
+<span class="cm"># 2️⃣  Move model</span>
+model = model.<span class="fn">to</span>(device)
+
+<span class="cm"># 3️⃣  Move EVERY batch (train loop)</span>
+batch_features, batch_labels = batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+
+<span class="cm"># 4️⃣  Move EVERY batch (eval loop) + no_grad</span>
+<span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+    batch_features, batch_labels = batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+
+<span class="cm"># 5️⃣  Optimise DataLoader</span>
+<span class="cls">DataLoader</span>(..., batch_size=<span class="num">128</span>, pin_memory=<span class="num">True</span>)</pre>
+        </div>
+
+    </div>
+
+    <footer>CampusX · Neural Network Training on GPU · Video 8 · Notes generated from lecture screenshots</footer>
+
+</body>
+
+</html>
