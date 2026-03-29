@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperparameter Tuning — ANN with Optuna</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --surface2: #1a1e28;
+            --border: #252a38;
+            --accent: #7c6aff;
+            --accent2: #00d4aa;
+            --accent3: #ff6b6b;
+            --accent4: #ffd166;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --code-bg: #0a0c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            line-height: 1.7;
+            padding: 40px 20px 80px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 20px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(124, 106, 255, 0.12) 0%, transparent 70%);
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(124, 106, 255, 0.2), rgba(0, 212, 170, 0.2));
+            border: 1px solid rgba(124, 106, 255, 0.4);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            padding: 6px 18px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 12px;
+        }
+
+        .header h1 span {
+            color: var(--accent);
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* Section headings */
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .card.purple::before {
+            background: linear-gradient(90deg, var(--accent), transparent);
+        }
+
+        .card.green::before {
+            background: linear-gradient(90deg, var(--accent2), transparent);
+        }
+
+        .card.red::before {
+            background: linear-gradient(90deg, var(--accent3), transparent);
+        }
+
+        .card.yellow::before {
+            background: linear-gradient(90deg, var(--accent4), transparent);
+        }
+
+        .card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .icon.p {
+            background: rgba(124, 106, 255, 0.15);
+        }
+
+        .icon.g {
+            background: rgba(0, 212, 170, 0.15);
+        }
+
+        .icon.r {
+            background: rgba(255, 107, 107, 0.15);
+        }
+
+        .icon.y {
+            background: rgba(255, 209, 102, 0.15);
+        }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        @media(max-width:640px) {
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Lists */
+        ul.styled {
+            list-style: none;
+        }
+
+        ul.styled li {
+            padding: 6px 0 6px 20px;
+            position: relative;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #c5c9d6;
+        }
+
+        ul.styled li:last-child {
+            border-bottom: none;
+        }
+
+        ul.styled li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent2);
+            font-size: 11px;
+            top: 8px;
+        }
+
+        ul.styled li strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Code blocks */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            overflow-x: auto;
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        pre .c {
+            color: #4b5563;
+        }
+
+        /* comment */
+        pre .k {
+            color: #7c6aff;
+        }
+
+        /* keyword */
+        pre .s {
+            color: #00d4aa;
+        }
+
+        /* string */
+        pre .n {
+            color: #ffd166;
+        }
+
+        /* number */
+        pre .fn {
+            color: #60a5fa;
+        }
+
+        /* function */
+        pre .cl {
+            color: #f0abfc;
+        }
+
+        /* class */
+        pre .p {
+            color: #e8eaf0;
+        }
+
+        /* plain */
+        pre .m {
+            color: #ff6b6b;
+        }
+
+        /* method */
+
+        /* Code label */
+        .code-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        /* Flow diagram */
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex-wrap: wrap;
+            margin: 14px 0;
+        }
+
+        .flow-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .flow-box.accent {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .flow-box.green {
+            border-color: var(--accent2);
+            color: var(--accent2);
+        }
+
+        .flow-arrow {
+            color: var(--muted);
+            padding: 0 8px;
+            font-size: 16px;
+        }
+
+        /* HP grid */
+        .hp-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        @media(max-width:640px) {
+            .hp-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .hp-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .hp-item .num {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .hp-item .name {
+            color: var(--text);
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .hp-item .range {
+            color: var(--muted);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 4px;
+        }
+
+        .hp-item .method {
+            color: var(--accent2);
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Best result box */
+        .best-result {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.08), rgba(124, 106, 255, 0.08));
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 18px;
+        }
+
+        .best-accuracy {
+            font-family: 'Syne', sans-serif;
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--accent2);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .best-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+
+        .param-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .param-tag {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        .param-tag .pk {
+            color: var(--muted);
+        }
+
+        .param-tag .pv {
+            color: var(--accent4);
+            margin-left: 4px;
+        }
+
+        /* MLflow insights */
+        .insight-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        @media(max-width:640px) {
+            .insight-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .insight-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .insight-card .it {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .insight-card .id {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .insight-card .ic {
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        /* Tab navigation */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active,
+        .tab:hover {
+            background: rgba(124, 106, 255, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 32px 0;
+        }
+
+        /* Inline highlight */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: rgba(124, 106, 255, 0.12);
+            border: 1px solid rgba(124, 106, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent);
+        }
+
+        p.note {
+            font-size: 13px;
+            color: #c5c9d6;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ========== HEADER ========== -->
+    <div class="header">
+        <div class="badge">CampusX · Video 10 · Deep Learning</div>
+        <h1>Hyperparameter Tuning<br>the <span>ANN</span> using Optuna</h1>
+        <p>Fashion-MNIST · PyTorch · GPU · Optuna · MLflow</p>
+    </div>
+
+    <div class="container">
+
+        <!-- ========== SECTION 1: RECAP ========== -->
+        <div class="section-title">01 · Recap &amp; Context</div>
+
+        <div class="grid-2">
+            <div class="card purple">
+                <div class="card-title">
+                    <div class="icon p">🔁</div> The Problem
+                </div>
+                <p class="note">We've been manually setting hyperparameters for an ANN on Fashion-MNIST (784 inputs → 10
+                    outputs). Manual experimentation is slow and suboptimal.</p>
+                <ul class="styled">
+                    <li>Hidden layers: <strong>128 → 64 → 10</strong></li>
+                    <li>Epochs: <strong>100</strong>, Batch: <strong>32</strong></li>
+                    <li>LR: <strong>0.1</strong>, Dropout: <strong>0.3</strong></li>
+                    <li>Dataset: 60k train / 10k test</li>
+                </ul>
+            </div>
+            <div class="card green">
+                <div class="card-title">
+                    <div class="icon g">🔍</div> Tuning Strategies
+                </div>
+                <ul class="styled">
+                    <li><strong>Grid Search CV</strong> — exhaustive, slow</li>
+                    <li><strong>Random CV</strong> — random sampling</li>
+                    <li><strong>Bayesian Search</strong> — smart, learns from past trials <span
+                            style="color:var(--accent2)">✓ Optuna</span></li>
+                </ul>
+                <div
+                    style="margin-top:14px; padding:10px 14px; background:rgba(0,212,170,0.08); border-radius:8px; border:1px solid rgba(0,212,170,0.2); font-size:13px;">
+                    💡 Optuna uses <strong>Bayesian Optimization (TPE)</strong> to intelligently search the space — far
+                    more efficient than Grid or Random.
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION 2: PLAN OF ACTION ========== -->
+        <div class="section-title">02 · Plan of Action — 8 Hyperparameters</div>
+
+        <div class="hp-grid">
+            <div class="hp-item">
+                <div class="num">1</div>
+                <div class="name">Hidden Layers</div>
+                <div class="range">1 → 5</div>
+                <div class="method">suggest_int</div>
+            </div>
+            <div class="hp-item">
+                <div class="num">2</div>
+                <div class="name">Neurons / Layer</div>
+                <div class="range">8 → 128 (step=8)</div>
+                <div class="method">suggest_int</div>
+            </div>
+            <div class="hp-item">
+                <div class="num">3</div>
+                <div class="name">Epochs</div>
+                <div class="range">10 → 50 (step=10)</div>
+                <div class="method">suggest_int</div>
+            </div>
+            <div class="hp-item">
+                <div class="num">4</div>
+                <div class="name">Optimizer</div>
+                <div class="range">Adam / SGD / RMSprop</div>
+                <div class="method">suggest_categorical</div>
+            </div>
+            <div class="hp-item">
+                <div class="num">5</div>
+                <div class="name">Learning Rate</div>
+                <div class="range">1e-5 → 1e-1 (log)</div>
+                <div class="method">suggest_float</div>
+            </div>
+            <div class="hp-item">
+                <div class="num">6</div>
+                <div class="name">Batch Size</div>
+                <div class="range">[16, 32, 64, 128]</div>
+                <div class="method">suggest_categorical</div>
+            </div>
+            <div class="hp-item">
+                <div class="num">7</div>
+                <div class="name">Dropout Rate</div>
+                <div class="range">0.1 → 0.5 (step=0.1)</div>
+                <div class="method">suggest_float</div>
+            </div>
+            <div class="hp-item">
+                <div class="num">8</div>
+                <div class="name">Weight Decay</div>
+                <div class="range">1e-5 → 1e-3 (log)</div>
+                <div class="method">suggest_float</div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION 3: OPTUNA FLOW ========== -->
+        <div class="section-title">03 · Optuna Flow Architecture</div>
+
+        <div class="card yellow">
+            <div class="card-title">
+                <div class="icon y">⚡</div> How Optuna Works
+            </div>
+            <div class="flow">
+                <div class="flow-box green">study = create_study()</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">n_trials=10</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box accent">Trial object</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">objective(trial)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box green">return accuracy</div>
+                <div class="flow-arrow">↩</div>
+            </div>
+            <p class="note" style="margin-top:10px;">The <code>objective(trial)</code> function contains: search space →
+                model init → param init → training loop → evaluation → return accuracy</p>
+        </div>
+
+        <!-- ========== SECTION 4: MODEL ARCHITECTURE ========== -->
+        <div class="section-title">04 · Dynamic MyNN Model Architecture</div>
+
+        <div class="card green">
+            <div class="card-title">
+                <div class="icon g">🧠</div> MyNN Class — Dynamic Hidden Layers
+            </div>
+            <div class="code-label">python · nn.Module</div>
+            <pre><span class="k">class</span> <span class="cl">MyNN</span>(<span class="p">nn.Module</span>):
+    <span class="k">def</span> <span class="fn">__init__</span>(<span class="p">self, input_dim, output_dim,</span>
+                 <span class="p">num_hidden_layers, neurons_per_layer, dropout_rate</span><span class="p">):</span>
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+
+        layers <span class="p">= []</span>
+
+        <span class="k">for</span> i <span class="k">in</span> <span class="fn">range</span>(num_hidden_layers):
+            layers.<span class="fn">append</span>(nn.<span class="fn">Linear</span>(input_dim, neurons_per_layer))
+            layers.<span class="fn">append</span>(nn.<span class="fn">BatchNorm1d</span>(neurons_per_layer))
+            layers.<span class="fn">append</span>(nn.<span class="fn">ReLU</span>())
+            layers.<span class="fn">append</span>(nn.<span class="fn">Dropout</span>(dropout_rate))   <span class="c"># ← tunable!</span>
+            input_dim <span class="p">= neurons_per_layer</span>
+
+        <span class="c"># output layer</span>
+        layers.<span class="fn">append</span>(nn.<span class="fn">Linear</span>(neurons_per_layer, output_dim))
+
+        self.model <span class="p">=</span> nn.<span class="fn">Sequential</span>(*layers)
+
+    <span class="k">def</span> <span class="fn">forward</span>(<span class="p">self, x</span>):
+        <span class="k">return</span> self.model(x)</pre>
+            <p class="note" style="font-size:12px; color:var(--muted);">Example: num_hidden_layers=2,
+                neurons_per_layer=128 → layers: (784,128) → (128,128) → (128,10)</p>
+        </div>
+
+        <!-- ========== SECTION 5: OBJECTIVE FUNCTION ========== -->
+        <div class="section-title">05 · Complete Objective Function</div>
+
+        <div class="card purple">
+            <div class="card-title">
+                <div class="icon p">🎯</div> objective(trial) — Full Implementation
+            </div>
+
+            <div class="code-label">Step 1 · Search Space (Hyperparameters)</div>
+            <pre><span class="k">def</span> <span class="fn">objective</span>(trial):
+    <span class="c"># ── Architecture ──────────────────────────</span>
+    num_hidden_layers <span class="p">=</span> trial.<span class="fn">suggest_int</span>(<span class="s">"num_hidden_layers"</span>, <span class="n">1</span>, <span class="n">5</span>)
+    neurons_per_layer <span class="p">=</span> trial.<span class="fn">suggest_int</span>(<span class="s">"neurons_per_layer"</span>, <span class="n">8</span>, <span class="n">128</span>, step=<span class="n">8</span>)
+
+    <span class="c"># ── Training ──────────────────────────────</span>
+    epochs        <span class="p">=</span> trial.<span class="fn">suggest_int</span>(<span class="s">"epochs"</span>, <span class="n">10</span>, <span class="n">50</span>, step=<span class="n">10</span>)
+    learning_rate <span class="p">=</span> trial.<span class="fn">suggest_float</span>(<span class="s">"learning_rate"</span>, <span class="n">1e-5</span>, <span class="n">1e-1</span>, log=<span class="k">True</span>)
+    dropout_rate  <span class="p">=</span> trial.<span class="fn">suggest_float</span>(<span class="s">"dropout_rate"</span>, <span class="n">0.1</span>, <span class="n">0.5</span>, step=<span class="n">0.1</span>)
+    weight_decay  <span class="p">=</span> trial.<span class="fn">suggest_float</span>(<span class="s">"weight_decay"</span>, <span class="n">1e-5</span>, <span class="n">1e-3</span>, log=<span class="k">True</span>)
+    batch_size    <span class="p">=</span> trial.<span class="fn">suggest_categorical</span>(<span class="s">"batch_size"</span>, [<span class="n">16</span>, <span class="n">32</span>, <span class="n">64</span>, <span class="n">128</span>])
+    optimizer_name<span class="p">=</span> trial.<span class="fn">suggest_categorical</span>(<span class="s">"optimizer"</span>, [<span class="s">'Adam'</span>, <span class="s">'SGD'</span>, <span class="s">'RMSprop'</span>])</pre>
+
+            <div class="code-label">Step 2 · DataLoader + Model Init</div>
+            <pre>    <span class="c"># DataLoader with tunable batch_size</span>
+    train_loader <span class="p">=</span> <span class="fn">DataLoader</span>(train_dataset, batch_size=batch_size,
+                              shuffle=<span class="k">True</span>, pin_memory=<span class="k">True</span>)
+    test_loader  <span class="p">=</span> <span class="fn">DataLoader</span>(test_dataset,  batch_size=batch_size,
+                              shuffle=<span class="k">False</span>, pin_memory=<span class="k">True</span>)
+
+    <span class="c"># Model</span>
+    input_dim <span class="p">=</span> <span class="n">784</span>; output_dim <span class="p">=</span> <span class="n">10</span>
+    model <span class="p">=</span> <span class="fn">MyNN</span>(input_dim, output_dim, num_hidden_layers,
+                 neurons_per_layer, dropout_rate)
+    model.<span class="fn">to</span>(device)</pre>
+
+            <div class="code-label">Step 3 · Optimizer Selection</div>
+            <pre>    criterion <span class="p">=</span> nn.<span class="fn">CrossEntropyLoss</span>()
+
+    <span class="k">if</span> optimizer_name <span class="p">==</span> <span class="s">'Adam'</span>:
+        optimizer <span class="p">=</span> optim.<span class="fn">Adam</span>(model.<span class="fn">parameters</span>(),
+                               lr=learning_rate, weight_decay=weight_decay)
+    <span class="k">elif</span> optimizer_name <span class="p">==</span> <span class="s">'SGD'</span>:
+        optimizer <span class="p">=</span> optim.<span class="fn">SGD</span>(model.<span class="fn">parameters</span>(),
+                              lr=learning_rate, weight_decay=weight_decay)
+    <span class="k">else</span>:
+        optimizer <span class="p">=</span> optim.<span class="fn">RMSprop</span>(model.<span class="fn">parameters</span>(),
+                                  lr=learning_rate, weight_decay=weight_decay)</pre>
+
+            <div class="code-label">Step 4 · Training Loop</div>
+            <pre>    <span class="k">for</span> epoch <span class="k">in</span> <span class="fn">range</span>(epochs):
+        <span class="k">for</span> batch_features, batch_labels <span class="k">in</span> train_loader:
+            <span class="c"># move data to GPU</span>
+            batch_features, batch_labels <span class="p">=</span> \
+                batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+
+            outputs <span class="p">=</span> <span class="fn">model</span>(batch_features)         <span class="c"># forward pass</span>
+            loss    <span class="p">=</span> <span class="fn">criterion</span>(outputs, batch_labels) <span class="c"># calc loss</span>
+
+            optimizer.<span class="fn">zero_grad</span>()                    <span class="c"># back pass</span>
+            loss.<span class="fn">backward</span>()
+            optimizer.<span class="fn">step</span>()                         <span class="c"># update grads</span></pre>
+
+            <div class="code-label">Step 5 · Evaluation Loop</div>
+            <pre>    model.<span class="fn">eval</span>()
+    total <span class="p">=</span> <span class="n">0</span>; correct <span class="p">=</span> <span class="n">0</span>
+
+    <span class="k">with</span> torch.<span class="fn">no_grad</span>():
+        <span class="k">for</span> batch_features, batch_labels <span class="k">in</span> test_loader:
+            batch_features, batch_labels <span class="p">=</span> \
+                batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+            outputs <span class="p">=</span> <span class="fn">model</span>(batch_features)
+            _, predicted <span class="p">=</span> torch.<span class="fn">max</span>(outputs, <span class="n">1</span>)
+            total   <span class="p">+=</span> batch_labels.shape[<span class="n">0</span>]
+            correct <span class="p">+=</span> (predicted <span class="p">==</span> batch_labels).<span class="fn">sum</span>().<span class="fn">item</span>()
+
+    accuracy <span class="p">=</span> correct <span class="p">/</span> total
+    <span class="k">return</span> accuracy   <span class="c"># Optuna maximizes this</span></pre>
+        </div>
+
+        <!-- ========== SECTION 6: RUNNING OPTUNA ========== -->
+        <div class="section-title">06 · Running the Study</div>
+
+        <div class="card red">
+            <div class="card-title">
+                <div class="icon r">🚀</div> Create Study &amp; Optimize
+            </div>
+            <pre><span class="k">import</span> optuna
+
+<span class="c"># Create study - maximize accuracy</span>
+study <span class="p">=</span> optuna.<span class="fn">create_study</span>(direction=<span class="s">'maximize'</span>)
+
+<span class="c"># Run 10 trials (scale to 50 with MLflow)</span>
+study.<span class="fn">optimize</span>(objective, n_trials=<span class="n">10</span>)</pre>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
+                <div
+                    style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px;">
+                    <div
+                        style="font-size:11px; color:var(--muted); margin-bottom:6px; font-family:'JetBrains Mono',monospace;">
+                        EARLY RESULT (2 params)</div>
+                    <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--accent4);">
+                        89.33%</div>
+                    <div style="font-size:12px; color:var(--muted); margin-top:4px;">num_hidden_layers:
+                        3<br>neurons_per_layer: 120</div>
+                </div>
+                <div
+                    style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px;">
+                    <div
+                        style="font-size:11px; color:var(--muted); margin-bottom:6px; font-family:'JetBrains Mono',monospace;">
+                        FULL TUNING (8 params)</div>
+                    <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--accent2);">
+                        89.08%</div>
+                    <div style="font-size:12px; color:var(--muted); margin-top:4px;">optimizer: RMSprop<br>dropout: 0.2,
+                        batch: 128</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION 7: BEST RESULTS ========== -->
+        <div class="section-title">07 · Best Trial Results (51 Runs via MLflow)</div>
+
+        <div class="best-result">
+            <div class="best-accuracy">90.64%</div>
+            <div class="best-label">Best Accuracy — 51 Runs · study.best_value = 0.90642</div>
+            <div class="param-tags">
+                <div class="param-tag"><span class="pk">hidden_layers:</span><span class="pv">4</span></div>
+                <div class="param-tag"><span class="pk">neurons/layer:</span><span class="pv">88</span></div>
+                <div class="param-tag"><span class="pk">epochs:</span><span class="pv">20</span></div>
+                <div class="param-tag"><span class="pk">optimizer:</span><span class="pv">RMSprop</span></div>
+                <div class="param-tag"><span class="pk">lr:</span><span class="pv">3.003e-4</span></div>
+                <div class="param-tag"><span class="pk">dropout:</span><span class="pv">0.2</span></div>
+                <div class="param-tag"><span class="pk">batch_size:</span><span class="pv">128</span></div>
+                <div class="param-tag"><span class="pk">weight_decay:</span><span class="pv">4.54e-4</span></div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION 8: MLFLOW INTEGRATION ========== -->
+        <div class="section-title">08 · Optuna × MLflow Integration</div>
+
+        <div class="card yellow">
+            <div class="card-title">
+                <div class="icon y">📊</div> Experiment Tracking Flow
+            </div>
+            <div class="flow" style="margin-bottom:16px;">
+                <div class="flow-box">Experiment</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box accent">Trials (n=50)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">Logs (params + metrics)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box green">MLflow UI</div>
+            </div>
+            <p class="note">Each Optuna trial is logged as an MLflow run. Scale from 10 → 50 trials for thorough search.
+                MLflow tracks all 8 hyperparameters + accuracy per run.</p>
+        </div>
+
+        <!-- MLflow Visualizations -->
+        <div class="insight-row">
+            <div class="insight-card">
+                <div class="ic">📈</div>
+                <div class="it">Parallel Coordinates — num_hidden_layers</div>
+                <div class="id">Higher hidden layers (3–5) trend toward better accuracy (red lines cluster at
+                    0.85–0.90+)</div>
+            </div>
+            <div class="insight-card">
+                <div class="ic">⚙️</div>
+                <div class="it">Parallel Coordinates — optimizer</div>
+                <div class="id">SGD &amp; RMSprop dominate top-performing runs; Adam generally falls lower (~0.70–0.75)
+                </div>
+            </div>
+            <div class="insight-card">
+                <div class="ic">🔵</div>
+                <div class="it">Scatter Plot — optimizer vs accuracy</div>
+                <div class="id">RMSprop clusters highest (0.85–0.90+), SGD is competitive, Adam most variable</div>
+            </div>
+            <div class="insight-card">
+                <div class="ic">💧</div>
+                <div class="it">Parallel Coordinates — dropout_rate</div>
+                <div class="id">Higher dropout (0.30–0.50) strongly correlates with higher accuracy — regularization
+                    helps</div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ========== QUICK REFERENCE ========== -->
+        <div class="section-title">Quick Reference — Optuna API</div>
+
+        <div class="grid-2">
+            <div class="card purple">
+                <div class="card-title" style="font-size:14px;">trial.suggest_* Methods</div>
+                <ul class="styled">
+                    <li><code>suggest_int(name, low, high, step)</code></li>
+                    <li><code>suggest_float(name, low, high, log)</code></li>
+                    <li><code>suggest_categorical(name, choices)</code></li>
+                </ul>
+            </div>
+            <div class="card green">
+                <div class="card-title" style="font-size:14px;">study.* Attributes</div>
+                <ul class="styled">
+                    <li><code>study.best_value</code> — best accuracy</li>
+                    <li><code>study.best_params</code> — best HP dict</li>
+                    <li><code>study.optimize(fn, n_trials)</code></li>
+                    <li><code>direction='maximize'</code> for accuracy</li>
+                </ul>
+            </div>
+        </div>
+
+        <div
+            style="text-align:center; padding:30px 0 10px; font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace;">
+            CampusX · Practical Deep Learning · Video 10 · Optuna ANN Hyperparameter Tuning
+        </div>
+
+    </div>
+</body>
+
+</html>
