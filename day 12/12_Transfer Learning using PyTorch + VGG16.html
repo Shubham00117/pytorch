@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer Learning using PyTorch | VGG16</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --surface2: #1a1e28;
+            --border: #252a38;
+            --accent: #38bdf8;
+            --accent2: #a78bfa;
+            --accent3: #34d399;
+            --accent4: #fb923c;
+            --red: #f87171;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --code-bg: #090b10;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            line-height: 1.7;
+            padding: 40px 20px 80px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 56px 20px 44px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.09) 0%, transparent 70%);
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(167, 139, 250, 0.15));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            padding: 5px 16px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+        }
+
+        .header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(26px, 5vw, 46px);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 10px;
+        }
+
+        .header h1 span {
+            color: var(--accent);
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px 26px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .card.blue::before {
+            background: linear-gradient(90deg, var(--accent), transparent);
+        }
+
+        .card.purple::before {
+            background: linear-gradient(90deg, var(--accent2), transparent);
+        }
+
+        .card.green::before {
+            background: linear-gradient(90deg, var(--accent3), transparent);
+        }
+
+        .card.orange::before {
+            background: linear-gradient(90deg, var(--accent4), transparent);
+        }
+
+        .card.red::before {
+            background: linear-gradient(90deg, var(--red), transparent);
+        }
+
+        .card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .icon.b {
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .icon.p {
+            background: rgba(167, 139, 250, 0.15);
+        }
+
+        .icon.g {
+            background: rgba(52, 211, 153, 0.15);
+        }
+
+        .icon.o {
+            background: rgba(251, 146, 60, 0.15);
+        }
+
+        .icon.r {
+            background: rgba(248, 113, 113, 0.15);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        @media(max-width:640px) {
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ul.styled {
+            list-style: none;
+        }
+
+        ul.styled li {
+            padding: 5px 0 5px 18px;
+            position: relative;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #c5c9d6;
+        }
+
+        ul.styled li:last-child {
+            border-bottom: none;
+        }
+
+        ul.styled li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent3);
+            font-size: 10px;
+            top: 8px;
+        }
+
+        ul.styled li strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 18px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.75;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        pre .c {
+            color: #374151;
+        }
+
+        pre .k {
+            color: #38bdf8;
+        }
+
+        pre .s {
+            color: #34d399;
+        }
+
+        pre .n {
+            color: #fb923c;
+        }
+
+        pre .fn {
+            color: #93c5fd;
+        }
+
+        pre .cl {
+            color: #f0abfc;
+        }
+
+        pre .p {
+            color: #e8eaf0;
+        }
+
+        .code-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+
+        .flow-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 7px 13px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .flow-box.b {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .flow-box.g {
+            border-color: var(--accent3);
+            color: var(--accent3);
+        }
+
+        .flow-box.p {
+            border-color: var(--accent2);
+            color: var(--accent2);
+        }
+
+        .flow-arrow {
+            color: var(--muted);
+            padding: 0 7px;
+            font-size: 15px;
+        }
+
+        .step-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        @media(max-width:640px) {
+            .step-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .step-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 10px;
+        }
+
+        .step-item .sn {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .step-item .st {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+            margin: 4px 0 2px;
+        }
+
+        .step-item .sd {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .transform-pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 12px 0;
+        }
+
+        .tp-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 8px 12px;
+        }
+
+        .tp-num {
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--accent);
+            min-width: 20px;
+        }
+
+        .tp-action {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text);
+            flex: 1;
+        }
+
+        .tp-shape {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent3);
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .vgg-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        @media(max-width:640px) {
+            .vgg-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-family: 'Syne', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent4);
+        }
+
+        .stat-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 2px;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(56, 189, 248, 0.08));
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 16px;
+        }
+
+        .result-accuracy {
+            font-family: 'Syne', sans-serif;
+            font-size: 38px;
+            font-weight: 800;
+            color: var(--accent3);
+            line-height: 1;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .arch-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .arch-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 6px 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        .arch-idx {
+            color: var(--muted);
+            min-width: 28px;
+        }
+
+        .arch-layer {
+            color: var(--text);
+            flex: 1;
+        }
+
+        .arch-layer.conv {
+            color: var(--accent);
+        }
+
+        .arch-layer.pool {
+            color: var(--accent4);
+        }
+
+        .arch-layer.relu {
+            color: var(--accent3);
+        }
+
+        .arch-layer.linear {
+            color: var(--accent2);
+        }
+
+        .arch-layer.drop {
+            color: var(--red);
+        }
+
+        .arch-section {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 8px 0 4px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+        }
+
+        p.note {
+            font-size: 13px;
+            color: #c5c9d6;
+            margin-bottom: 10px;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 30px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="badge">CampusX · Video 12 · Deep Learning</div>
+        <h1>Transfer Learning<br>using <span>PyTorch</span> + VGG16</h1>
+        <p>Fashion-MNIST · torchvision · Feature Extraction · Fine-Tuning</p>
+    </div>
+
+    <div class="container">
+
+        <!-- ===== SECTION 1: RECAP ===== -->
+        <div class="section-title">01 · Recap — Fashion-MNIST Progress</div>
+
+        <div class="grid-3">
+            <div class="card blue">
+                <div class="card-title">
+                    <div class="icon b">🧠</div> ANN
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--accent);">90%</div>
+                <p class="note" style="margin:6px 0 0;font-size:12px;">Fully connected baseline</p>
+            </div>
+            <div class="card purple">
+                <div class="card-title">
+                    <div class="icon p">🔷</div> CNN
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--accent2);">92.6%
+                </div>
+                <p class="note" style="margin:6px 0 0;font-size:12px;">Conv layers added</p>
+            </div>
+            <div class="card green">
+                <div class="card-title">
+                    <div class="icon g">✨</div> CNN + Fix
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--accent3);">93.1%
+                </div>
+                <p class="note" style="margin:6px 0 0;font-size:12px;">Overfit fix + scope tuning</p>
+            </div>
+        </div>
+
+        <!-- ===== SECTION 2: WHAT IS TRANSFER LEARNING ===== -->
+        <div class="section-title">02 · What is Transfer Learning</div>
+
+        <div class="card blue">
+            <div class="card-title">
+                <div class="icon b">📖</div> Definition
+            </div>
+            <p class="note">A ML technique where a <strong>model trained on one task is reused</strong> (partially or
+                fully) for a different but related task. Instead of training from scratch (expensive, needs large data),
+                TL leverages knowledge from a pre-trained model to improve efficiency.</p>
+            <div class="grid-2" style="margin-top:14px;">
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">Why DL needs TL
+                    </div>
+                    <ul class="styled">
+                        <li><strong>Data hungry</strong> — needs millions of samples</li>
+                        <li><strong>Costly</strong> — requires GPU / graphics card</li>
+                    </ul>
+                </div>
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">How it works</div>
+                    <ul class="styled">
+                        <li><strong>Pretrain</strong> on large dataset (ImageNet, 1.4M imgs)</li>
+                        <li><strong>Fine-tune</strong> on smaller, specific dataset</li>
+                        <li>Some layers <strong>frozen</strong>, others retrained</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SECTION 3: WHY IT WORKS ===== -->
+        <div class="section-title">03 · Why Does Transfer Learning Work</div>
+
+        <div class="card purple">
+            <div class="card-title">
+                <div class="icon p">🔬</div> CNN Feature Hierarchy (VGG-style)
+            </div>
+            <p class="note">CNNs learn a hierarchy of features — early layers learn <strong>general, reusable</strong>
+                patterns that apply to ANY image classification task.</p>
+            <div class="flow" style="margin:14px 0;">
+                <div class="flow-box b">Input 224×224×3</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">Early layers<br><small>Edges</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">Mid layers<br><small>Shapes</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">Deep layers<br><small>Objects</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box g">Output</div>
+            </div>
+            <div
+                style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:8px;padding:10px 14px;font-size:13px;">
+                💡 <strong>Feature extraction layers (edges→shapes) are reusable!</strong> Trained on large dataset →
+                transferred to small dataset → only the classifier head needs retraining.
+            </div>
+        </div>
+
+        <!-- ===== SECTION 4: PLAN OF ACTION ===== -->
+        <div class="section-title">04 · Plan of Action — 5-Step Workflow</div>
+
+        <div class="step-grid">
+            <div class="step-item">
+                <div class="sn">1</div>
+                <div class="st">Import VGG16</div>
+                <div class="sd">torchvision.models — pretrained=True</div>
+            </div>
+            <div class="step-item">
+                <div class="sn">2</div>
+                <div class="st">Detach Classifier</div>
+                <div class="sd">Remove original 1000-class FC head</div>
+            </div>
+            <div class="step-item">
+                <div class="sn">3</div>
+                <div class="st">Attach Classifier</div>
+                <div class="sd">Add custom 10-class head for Fashion-MNIST</div>
+            </div>
+            <div class="step-item">
+                <div class="sn">4</div>
+                <div class="st">Freeze FE Layers</div>
+                <div class="sd">requires_grad=False on all feature layers</div>
+            </div>
+            <div class="step-item" style="grid-column:span 2;">
+                <div class="sn">5</div>
+                <div class="st">Train</div>
+                <div class="sd">Only classifier params update; feature extractor frozen. Optimizer: only
+                    vgg16.classifier.parameters()</div>
+            </div>
+        </div>
+
+        <!-- ===== SECTION 5: VGG16 ARCHITECTURE ===== -->
+        <div class="section-title">05 · VGG-16 Architecture</div>
+
+        <div class="card orange">
+            <div class="card-title">
+                <div class="icon o">🏗️</div> VGG-16 — Pretrained on ImageNet (1.4M images, 1000 classes)
+            </div>
+            <div class="vgg-stats">
+                <div class="stat-box">
+                    <div class="stat-val">138M</div>
+                    <div class="stat-lbl">Parameters</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val">527.8MB</div>
+                    <div class="stat-lbl">File Size</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val">71.59%</div>
+                    <div class="stat-lbl">acc@1 ImageNet</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val">15.47</div>
+                    <div class="stat-lbl">GFLOPS</div>
+                </div>
+            </div>
+
+            <div class="arch-section">Feature Extraction (freeze these)</div>
+            <div class="arch-layers">
+                <div class="arch-row"><span class="arch-idx">(0-3)</span><span class="arch-layer conv">Conv2d(3→64) +
+                        Conv2d(64→64) + ReLU × 2</span><span style="color:var(--muted);font-size:11px;">224×224</span>
+                </div>
+                <div class="arch-row"><span class="arch-idx">(4)</span><span class="arch-layer pool">MaxPool2d(k=2,
+                        s=2)</span><span style="color:var(--muted);font-size:11px;">→ 112×112</span></div>
+                <div class="arch-row"><span class="arch-idx">(5-8)</span><span class="arch-layer conv">Conv2d(64→128) +
+                        Conv2d(128→128) + ReLU × 2</span></div>
+                <div class="arch-row"><span class="arch-idx">(9)</span><span
+                        class="arch-layer pool">MaxPool2d</span><span style="color:var(--muted);font-size:11px;">→
+                        56×56</span></div>
+                <div class="arch-row"><span class="arch-idx">(10-15)</span><span class="arch-layer conv">Conv2d(128→256)
+                        × 3 + ReLU × 3</span></div>
+                <div class="arch-row"><span class="arch-idx">(16)</span><span
+                        class="arch-layer pool">MaxPool2d</span><span style="color:var(--muted);font-size:11px;">→
+                        28×28</span></div>
+                <div class="arch-row"><span class="arch-idx">(17-22)</span><span class="arch-layer conv">Conv2d(256→512)
+                        × 3 + ReLU × 3</span></div>
+                <div class="arch-row"><span class="arch-idx">(23)</span><span
+                        class="arch-layer pool">MaxPool2d</span><span style="color:var(--muted);font-size:11px;">→
+                        14×14</span></div>
+                <div class="arch-row"><span class="arch-idx">(24-29)</span><span class="arch-layer conv">Conv2d(512→512)
+                        × 3 + ReLU × 3</span></div>
+                <div class="arch-row"><span class="arch-idx">(30)</span><span
+                        class="arch-layer pool">MaxPool2d</span><span style="color:var(--muted);font-size:11px;">→
+                        7×7</span></div>
+                <div class="arch-row"><span class="arch-idx">avg</span><span
+                        class="arch-layer pool">AdaptiveAvgPool2d(7×7)</span><span
+                        style="color:var(--muted);font-size:11px;">→ 25088 flat</span></div>
+            </div>
+
+            <div class="arch-section" style="margin-top:10px;">Original Classifier (replaced)</div>
+            <div class="arch-layers">
+                <div class="arch-row"><span class="arch-idx">(0)</span><span class="arch-layer linear">Linear(25088 →
+                        4096)</span></div>
+                <div class="arch-row"><span class="arch-idx">(1-2)</span><span class="arch-layer relu">ReLU +
+                        Dropout(0.5)</span></div>
+                <div class="arch-row"><span class="arch-idx">(3)</span><span class="arch-layer linear">Linear(4096 →
+                        4096)</span></div>
+                <div class="arch-row"><span class="arch-idx">(4-5)</span><span class="arch-layer relu">ReLU +
+                        Dropout(0.5)</span></div>
+                <div class="arch-row"><span class="arch-idx">(6)</span><span class="arch-layer drop">Linear(4096 → 1000)
+                        ← REMOVED</span></div>
+            </div>
+
+            <div class="arch-section" style="margin-top:10px;">New Classifier (our custom head)</div>
+            <div class="arch-layers">
+                <div class="arch-row"><span class="arch-idx">(0)</span><span class="arch-layer linear">Linear(25088 →
+                        1024)</span></div>
+                <div class="arch-row"><span class="arch-idx">(1-2)</span><span class="arch-layer relu">ReLU +
+                        Dropout(0.5)</span></div>
+                <div class="arch-row"><span class="arch-idx">(3)</span><span class="arch-layer linear">Linear(1024 →
+                        512)</span></div>
+                <div class="arch-row"><span class="arch-idx">(4-5)</span><span class="arch-layer relu">ReLU +
+                        Dropout(0.5)</span></div>
+                <div class="arch-row"><span class="arch-idx">(6)</span><span class="arch-layer linear">Linear(512 → 10)
+                        ← Fashion-MNIST classes</span></div>
+            </div>
+        </div>
+
+        <!-- ===== SECTION 6: DATA PIPELINE ===== -->
+        <div class="section-title">06 · Data Pipeline — Fashion-MNIST → VGG Input</div>
+
+        <div class="card green">
+            <div class="card-title">
+                <div class="icon g">🔄</div> 8-Step Transform: (1,784) → (3,224,224)
+            </div>
+            <p class="note" style="margin-bottom:12px;">Fashion-MNIST is tabular (1×784). VGG16 expects (3, 224, 224).
+                We must convert!</p>
+            <div class="transform-pipeline">
+                <div class="tp-row"><span class="tp-num">1</span><span class="tp-action">reshape(28,28) → 2D matrix →
+                        PIL</span><span class="tp-shape">(28,28)</span></div>
+                <div class="tp-row"><span class="tp-num">2</span><span class="tp-action">astype(np.uint8) — change
+                        datatype</span><span class="tp-shape">uint8</span></div>
+                <div class="tp-row"><span class="tp-num">3</span><span class="tp-action">np.stack([image]*3, axis=-1) —
+                        grayscale → color</span><span class="tp-shape">(28,28,3)</span></div>
+                <div class="tp-row"><span class="tp-num">4</span><span class="tp-action">Image.fromarray(image) — array
+                        → PIL</span><span class="tp-shape">PIL (H,W,C)</span></div>
+                <div class="tp-row"><span class="tp-num">5</span><span
+                        class="tp-action">transforms.Resize(256)</span><span class="tp-shape">(3,256,256)</span></div>
+                <div class="tp-row"><span class="tp-num">6</span><span
+                        class="tp-action">transforms.CenterCrop(224)</span><span class="tp-shape">(3,224,224)</span>
+                </div>
+                <div class="tp-row"><span class="tp-num">7</span><span class="tp-action">transforms.ToTensor() — scale
+                        to [0,1]</span><span class="tp-shape">(0,1)</span></div>
+                <div class="tp-row"><span class="tp-num">8</span><span
+                        class="tp-action">Normalize(mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225])</span><span
+                        class="tp-shape">p=(p−μ)/σ</span></div>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;">⚠️
+                np.stack trick: np.stack([arr]*3, axis=-1) → shape (H,W,3) | np.stack([arr]*3) → shape (3,H,W)</div>
+        </div>
+
+        <!-- ===== SECTION 7: COMPLETE CODE ===== -->
+        <div class="section-title">07 · Complete Implementation Code</div>
+
+        <div class="card blue">
+            <div class="card-title">
+                <div class="icon b">💻</div> Transforms + CustomDataset
+            </div>
+
+            <div class="code-label">Transforms (ImageNet normalization)</div>
+            <pre><span class="k">from</span> torchvision.transforms <span class="k">import</span> transforms
+
+custom_transform <span class="p">=</span> transforms.<span class="fn">Compose</span>([
+    transforms.<span class="fn">Resize</span>(<span class="n">256</span>),
+    transforms.<span class="fn">CenterCrop</span>(<span class="n">224</span>),
+    transforms.<span class="fn">ToTensor</span>(),
+    transforms.<span class="fn">Normalize</span>(mean=[<span class="n">0.485</span>, <span class="n">0.456</span>, <span class="n">0.406</span>],
+                         std=[<span class="n">0.229</span>, <span class="n">0.224</span>, <span class="n">0.225</span>])
+])</pre>
+
+            <div class="code-label">CustomDataset — handles tabular → image conversion</div>
+            <pre><span class="k">class</span> <span class="cl">CustomDataset</span>(Dataset):
+    <span class="k">def</span> <span class="fn">__init__</span>(<span class="p">self, features, labels, transform</span>):
+        self.features  <span class="p">=</span> features
+        self.labels    <span class="p">=</span> labels
+        self.transform <span class="p">=</span> transform
+
+    <span class="k">def</span> <span class="fn">__len__</span>(<span class="p">self</span>):
+        <span class="k">return</span> len(self.features)
+
+    <span class="k">def</span> <span class="fn">__getitem__</span>(<span class="p">self, index</span>):
+        <span class="c"># 1) reshape to 2D</span>
+        image <span class="p">=</span> self.features[index].<span class="fn">reshape</span>(<span class="n">28</span>, <span class="n">28</span>)
+
+        <span class="c"># 2) change datatype</span>
+        image <span class="p">=</span> image.<span class="fn">astype</span>(np.uint8)
+
+        <span class="c"># 3) B&W → color (H,W,C) format</span>
+        image <span class="p">=</span> np.<span class="fn">stack</span>([image]<span class="p">*</span><span class="n">3</span>, axis=<span class="p">-</span><span class="n">1</span>)
+
+        <span class="c"># 4) convert array → PIL image</span>
+        image <span class="p">=</span> Image.<span class="fn">fromarray</span>(image)
+
+        <span class="c"># 5) apply transforms (resize, crop, tensor, normalize)</span>
+        image <span class="p">=</span> self.<span class="fn">transform</span>(image)
+
+        <span class="k">return</span> image, torch.<span class="fn">tensor</span>(self.labels[index], dtype=torch.long)
+
+<span class="c"># Instantiate</span>
+train_dataset <span class="p">=</span> <span class="fn">CustomDataset</span>(X_train, y_train, transform=custom_transform)
+test_dataset  <span class="p">=</span> <span class="fn">CustomDataset</span>(X_test,  y_test,  transform=custom_transform)
+
+train_loader <span class="p">=</span> <span class="fn">DataLoader</span>(train_dataset, batch_size=<span class="n">32</span>, shuffle=<span class="k">True</span>,  pin_memory=<span class="k">True</span>)
+test_loader  <span class="p">=</span> <span class="fn">DataLoader</span>(test_dataset,  batch_size=<span class="n">32</span>, shuffle=<span class="k">False</span>, pin_memory=<span class="k">True</span>)</pre>
+        </div>
+
+        <div class="card purple">
+            <div class="card-title">
+                <div class="icon p">⚙️</div> VGG16 Setup — Load, Freeze, Replace Classifier
+            </div>
+            <pre><span class="k">from</span> torchvision <span class="k">import</span> models
+
+<span class="c"># Step 1: Load pretrained VGG16 (downloads 528MB)</span>
+vgg16 <span class="p">=</span> models.<span class="fn">vgg16</span>(pretrained=<span class="k">True</span>)
+
+<span class="c"># Step 4: Freeze all feature extraction layers</span>
+<span class="k">for</span> param <span class="k">in</span> vgg16.features.<span class="fn">parameters</span>():
+    param.requires_grad <span class="p">=</span> <span class="k">False</span>
+
+<span class="c"># Step 3: Replace classifier with custom 10-class head</span>
+vgg16.classifier <span class="p">=</span> nn.<span class="fn">Sequential</span>(
+    nn.<span class="fn">Linear</span>(<span class="n">25088</span>, <span class="n">1024</span>),
+    nn.<span class="fn">ReLU</span>(),
+    nn.<span class="fn">Dropout</span>(<span class="n">0.5</span>),
+    nn.<span class="fn">Linear</span>(<span class="n">1024</span>, <span class="n">512</span>),
+    nn.<span class="fn">ReLU</span>(),
+    nn.<span class="fn">Dropout</span>(<span class="n">0.5</span>),
+    nn.<span class="fn">Linear</span>(<span class="n">512</span>, <span class="n">10</span>)    <span class="c"># 10 Fashion-MNIST classes</span>
+)
+
+<span class="c"># Move to GPU</span>
+vgg16 <span class="p">=</span> vgg16.<span class="fn">to</span>(device)</pre>
+        </div>
+
+        <div class="card green">
+            <div class="card-title">
+                <div class="icon g">🚀</div> Training & Evaluation
+            </div>
+            <pre><span class="c"># Hyperparameters</span>
+learning_rate <span class="p">=</span> <span class="n">0.0001</span>   <span class="c"># small LR for fine-tuning!</span>
+epochs        <span class="p">=</span> <span class="n">10</span>
+
+criterion <span class="p">=</span> nn.<span class="fn">CrossEntropyLoss</span>()
+<span class="c"># ⚠️ Optimize ONLY classifier params (feature layers are frozen)</span>
+optimizer <span class="p">=</span> optim.<span class="fn">Adam</span>(vgg16.classifier.<span class="fn">parameters</span>(), lr=learning_rate)
+
+<span class="c"># Training loop</span>
+<span class="k">for</span> epoch <span class="k">in</span> <span class="fn">range</span>(epochs):
+    total_epoch_loss <span class="p">=</span> <span class="n">0</span>
+    <span class="k">for</span> batch_features, batch_labels <span class="k">in</span> train_loader:
+        batch_features, batch_labels <span class="p">=</span> \
+            batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+
+        outputs <span class="p">=</span> <span class="fn">vgg16</span>(batch_features)          <span class="c"># forward pass</span>
+        loss    <span class="p">=</span> <span class="fn">criterion</span>(outputs, batch_labels) <span class="c"># calc loss</span>
+
+        optimizer.<span class="fn">zero_grad</span>()                     <span class="c"># back pass</span>
+        loss.<span class="fn">backward</span>()
+        optimizer.<span class="fn">step</span>()
+
+        total_epoch_loss <span class="p">+=</span> loss.<span class="fn">item</span>()
+
+    avg_loss <span class="p">=</span> total_epoch_loss <span class="p">/</span> <span class="fn">len</span>(train_loader)
+    <span class="fn">print</span>(<span class="s">f'Epoch: {epoch+1}, Loss: {avg_loss}'</span>)
+
+<span class="c"># Evaluation (test data)</span>
+vgg16.<span class="fn">eval</span>()
+total <span class="p">=</span> <span class="n">0</span>; correct <span class="p">=</span> <span class="n">0</span>
+<span class="k">with</span> torch.<span class="fn">no_grad</span>():
+    <span class="k">for</span> batch_features, batch_labels <span class="k">in</span> test_loader:
+        batch_features, batch_labels <span class="p">=</span> \
+            batch_features.<span class="fn">to</span>(device), batch_labels.<span class="fn">to</span>(device)
+        outputs <span class="p">=</span> <span class="fn">vgg16</span>(batch_features)
+        _, predicted <span class="p">=</span> torch.<span class="fn">max</span>(outputs, <span class="n">1</span>)
+        total   <span class="p">+=</span> batch_labels.shape[<span class="n">0</span>]
+        correct <span class="p">+=</span> (predicted <span class="p">==</span> batch_labels).<span class="fn">sum</span>().<span class="fn">item</span>()
+
+<span class="fn">print</span>(correct <span class="p">/</span> total)   <span class="c"># accuracy</span></pre>
+        </div>
+
+        <!-- ===== SECTION 8: KEY NOTES ===== -->
+        <div class="section-title">08 · Key Notes &amp; Gotchas</div>
+
+        <div class="grid-2">
+            <div class="card orange">
+                <div class="card-title">
+                    <div class="icon o">⚠️</div> Critical Points
+                </div>
+                <ul class="styled">
+                    <li>Use <strong>very small LR</strong> (0.0001 not 0.01) — classifier is fresh</li>
+                    <li>Optimizer on <code>vgg16.classifier.parameters()</code> only — not all params</li>
+                    <li>Fashion-MNIST is <strong>grayscale</strong> — must convert to 3-channel for VGG</li>
+                    <li><code>np.stack([image]*3, axis=-1)</code> → (H,W,C), not (C,H,W)</li>
+                    <li>Use ImageNet <strong>mean/std</strong> for normalization — not 0.5/0.5</li>
+                    <li>VGG16 input must be at least 32×32, expects 224×224</li>
+                </ul>
+            </div>
+            <div class="card red">
+                <div class="card-title">
+                    <div class="icon r">🔑</div> Quick Reference
+                </div>
+                <ul class="styled">
+                    <li><code>vgg16.features</code> — all conv/pool layers</li>
+                    <li><code>vgg16.classifier</code> — FC layers (replaceable)</li>
+                    <li><code>param.requires_grad=False</code> — freeze layer</li>
+                    <li>25088 = 512 × 7 × 7 (after AdaptiveAvgPool)</li>
+                    <li>VGG trained on <strong>ImageNet</strong> — 1000 classes, 1.4M images</li>
+                    <li>Epoch 1 loss ≈ 0.645 (convergence fast with TL)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ===== SUMMARY FLOW ===== -->
+        <div class="section-title">Summary Flow</div>
+
+        <div class="card blue">
+            <div class="flow" style="justify-content:center;">
+                <div class="flow-box b">Fashion-MNIST<br>(1,784)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">CustomDataset<br>8-step transform</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">(3,224,224)<br>normalized</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box p">VGG16 features<br>FROZEN</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box g">Custom head<br>10 classes</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box b">~94%+<br>accuracy</div>
+            </div>
+        </div>
+
+        <div
+            style="text-align:center;padding:28px 0 10px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;">
+            CampusX · Practical Deep Learning · Video 12 · Transfer Learning VGG16
+        </div>
+
+    </div>
+</body>
+
+</html>
