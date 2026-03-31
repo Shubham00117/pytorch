@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSTM Next Word Predictor | CampusX Video 14</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --card: #181c26;
+            --border: #252a38;
+            --accent: #5b8af5;
+            --accent2: #e8a838;
+            --accent3: #4ecdc4;
+            --accent4: #f06292;
+            --green: #56d364;
+            --text: #c9d1e0;
+            --muted: #5a6380;
+            --heading: #e8eaf2;
+            --code-bg: #0a0d14;
+            --tag-bg: #1e2436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 32px 20px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            border-left: 4px solid var(--accent);
+            padding: 18px 24px;
+            background: var(--surface);
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 36px;
+        }
+
+        .page-header h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--heading);
+            letter-spacing: -0.3px;
+        }
+
+        .page-header p {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--heading);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .dot.y {
+            background: var(--accent2);
+        }
+
+        .dot.g {
+            background: var(--green);
+        }
+
+        .dot.t {
+            background: var(--accent3);
+        }
+
+        .dot.p {
+            background: var(--accent4);
+        }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 700px) {
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Code */
+        pre,
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 8px 0;
+            line-height: 1.8;
+        }
+
+        .kw {
+            color: #c792ea;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .cm {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .cls {
+            color: #ffcb6b;
+        }
+
+        .var {
+            color: #eeffff;
+        }
+
+        code {
+            background: var(--tag-bg);
+            padding: 1px 6px;
+            border-radius: 4px;
+            color: var(--accent3);
+            font-size: 12px;
+        }
+
+        /* Flow / Pipeline */
+        .flow {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .flow-step {
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--heading);
+        }
+
+        .flow-arrow {
+            color: var(--muted);
+            font-size: 16px;
+        }
+
+        /* Shape box */
+        .shape-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 6px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+        }
+
+        .shape {
+            background: #1a2035;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 4px 12px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .shape.y {
+            border-color: var(--accent2);
+            color: var(--accent2);
+        }
+
+        .shape.g {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .shape.t {
+            border-color: var(--accent3);
+            color: var(--accent3);
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: var(--tag-bg);
+            color: var(--accent);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Alert / note */
+        .note {
+            background: #1a1f2e;
+            border-left: 3px solid var(--accent2);
+            border-radius: 0 8px 8px 0;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin: 8px 0;
+            color: var(--text);
+        }
+
+        .note strong {
+            color: var(--accent2);
+        }
+
+        ul {
+            padding-left: 18px;
+        }
+
+        ul li {
+            margin-bottom: 5px;
+            font-size: 13.5px;
+        }
+
+        .label {
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="page-header">
+            <h1>LSTM Next Word Predictor · PyTorch</h1>
+            <p>CampusX · Video 14 · Nitish Singh</p>
+            <div class="tags">
+                <span class="tag">LSTM</span>
+                <span class="tag">PyTorch</span>
+                <span class="tag">NLP</span>
+                <span class="tag">Language Modeling</span>
+                <span class="tag">Self-Supervised</span>
+            </div>
+        </div>
+
+        <!-- 1. Plan of Attack -->
+        <div class="section">
+            <div class="section-title">01 · Plan of Attack</div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title"><span class="dot"></span>Big Picture</div>
+                    <div class="flow">
+                        <div class="flow-step">RNN</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">QA System</div>
+                    </div>
+                    <div class="flow">
+                        <div class="flow-step">LSTM</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">Next Word Predictor</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">Language Modeling</div>
+                    </div>
+                    <div class="note" style="margin-top:10px;"><strong>Real Use:</strong> Keyboard autocomplete —
+                        predict the next word from previous context</div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="dot y"></span>Task Type</div>
+                    <ul>
+                        <li><strong>Self-Supervised</strong> — labels auto-generated from data (no manual annotation)
+                        </li>
+                        <li>Given sequence of previous words → predict next word</li>
+                        <li>Works at word level <em>or</em> character level</li>
+                        <li>LSTM processes sequence left-to-right, outputs prediction at final step</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Strategy & Data Prep (Conceptual) -->
+        <div class="section">
+            <div class="section-title">02 · Strategy — Data Preparation</div>
+            <div class="card">
+                <div class="card-title"><span class="dot t"></span>Vocab Building</div>
+                <div class="grid-2">
+                    <div>
+                        <div class="label">Example corpus snippet</div>
+                        <pre><span class="str">"Python libraries for Data Science"</span></pre>
+                        <div class="label" style="margin-top:10px;">Vocab map (word → index)</div>
+                        <pre><span class="var">vocab</span> = {
+  <span class="str">'&lt;unk&gt;'</span>: <span class="num">0</span>,
+  <span class="str">'python'</span>: <span class="num">2</span>,   <span class="str">'libraries'</span>: <span class="num">2</span>,
+  <span class="str">'for'</span>:    <span class="num">3</span>,   <span class="str">'data'</span>:      <span class="num">4</span>,
+  <span class="str">'science'</span>: <span class="num">5</span>,  ...
+}</pre>
+                    </div>
+                    <div>
+                        <div class="label">N-gram sequence generation</div>
+                        <div class="note"><strong>Idea:</strong> From sentence <code>[1, 2, 3, 4]</code> create all
+                            growing sub-sequences as inputs, with the last token as target label.</div>
+                        <pre><span class="cm"># Input → Label</span>
+[<span class="num">1</span>]        → [<span class="num">2</span>]
+[<span class="num">1</span>, <span class="num">2</span>]     → [<span class="num">3</span>]
+[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]  → [<span class="num">4</span>]
+[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>]  → [<span class="num">5</span>]</pre>
+                        <p style="font-size:12.5px;color:var(--muted);">Total generated: <strong
+                                style="color:var(--accent2);">942 sequences</strong> · Max length: <strong
+                                style="color:var(--accent2);">62 tokens</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title"><span class="dot g"></span>Padding Strategy</div>
+                <p style="font-size:13px;margin-bottom:8px;">Sequences have <em>different</em> lengths. Pad with zeros
+                    on the <strong>left</strong> to make all length = <code>max_len = 62</code>.</p>
+                <pre><span class="cm"># Pre-pad: zeros + actual sequence</span>
+<span class="var">padded</span> = [<span class="num">0</span>] * (<span class="var">max_len</span> - <span class="fn">len</span>(<span class="var">seq</span>)) + <span class="var">seq</span>
+
+<span class="cm"># Example:</span>
+[<span class="num">1</span>, <span class="num">2</span>] → [<span class="num">0</span>, <span class="num">0</span>, ..., <span class="num">0</span>, <span class="num">1</span>, <span class="num">2</span>]   <span class="cm"># length = 62</span></pre>
+                <div class="note"><strong>Why left-pad?</strong> The LSTM reads left to right — meaningful tokens appear
+                    at the end, so the last hidden state <code>h61</code> carries their context.</div>
+            </div>
+        </div>
+
+        <!-- 3. Full Code -->
+        <div class="section">
+            <div class="section-title">03 · Implementation — Step by Step</div>
+
+            <!-- Imports -->
+            <div class="card">
+                <div class="card-title"><span class="dot"></span>Step 1 · Imports</div>
+                <pre><span class="kw">import</span> <span class="cls">torch</span>
+<span class="kw">import</span> torch.nn <span class="kw">as</span> <span class="var">nn</span>
+<span class="kw">import</span> torch.optim <span class="kw">as</span> <span class="var">optim</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> <span class="var">np</span>
+<span class="kw">from</span> collections <span class="kw">import</span> <span class="cls">Counter</span>
+<span class="kw">from</span> torch.utils.data <span class="kw">import</span> <span class="cls">Dataset</span>, <span class="cls">DataLoader</span>
+<span class="kw">from</span> nltk.tokenize <span class="kw">import</span> <span class="fn">word_tokenize</span>
+<span class="kw">import</span> <span class="cls">nltk</span>
+
+<span class="fn">nltk.download</span>(<span class="str">'punkt'</span>)
+<span class="fn">nltk.download</span>(<span class="str">'punkt_tab'</span>)</pre>
+            </div>
+
+            <!-- Tokenize + Vocab -->
+            <div class="card">
+                <div class="card-title"><span class="dot y"></span>Step 2 · Tokenize & Build Vocab</div>
+                <pre><span class="cm"># Tokenize document</span>
+<span class="var">tokens</span> = <span class="fn">word_tokenize</span>(<span class="var">document</span>.<span class="fn">lower</span>())
+
+<span class="cm"># Build vocab dict  (len = 289)</span>
+<span class="var">vocab</span> = {<span class="str">'&lt;unk&gt;'</span>: <span class="num">0</span>}
+<span class="kw">for</span> <span class="var">token</span> <span class="kw">in</span> <span class="cls">Counter</span>(<span class="var">tokens</span>).<span class="fn">keys</span>():
+    <span class="kw">if</span> <span class="var">token</span> <span class="kw">not in</span> <span class="var">vocab</span>:
+        <span class="var">vocab</span>[<span class="var">token</span>] = <span class="fn">len</span>(<span class="var">vocab</span>)
+
+<span class="cm"># Helper: tokens → indices (with &lt;unk&gt; fallback)</span>
+<span class="kw">def</span> <span class="fn">text_to_indices</span>(<span class="var">tokens</span>, <span class="var">vocab</span>):
+    <span class="kw">return</span> [<span class="var">vocab</span>.<span class="fn">get</span>(<span class="var">t</span>, <span class="num">0</span>) <span class="kw">for</span> <span class="var">t</span> <span class="kw">in</span> <span class="var">tokens</span>]</pre>
+                <p style="font-size:12.5px;color:var(--muted);margin-top:6px;">Vocab size = <strong
+                        style="color:var(--accent2);">289</strong></p>
+            </div>
+
+            <!-- Sequence generation -->
+            <div class="card">
+                <div class="card-title"><span class="dot t"></span>Step 3 · Generate Training Sequences</div>
+                <pre><span class="cm"># Split into sentences</span>
+<span class="var">input_sentences</span> = <span class="var">document</span>.<span class="fn">split</span>(<span class="str">'\n'</span>)
+
+<span class="cm"># Build n-gram sequences for every sentence</span>
+<span class="var">training_sequence</span> = []
+<span class="kw">for</span> <span class="var">sentence</span> <span class="kw">in</span> <span class="var">input_sentences</span>:
+    <span class="var">tkns</span> = <span class="fn">word_tokenize</span>(<span class="var">sentence</span>.<span class="fn">lower</span>())
+    <span class="var">indices</span> = <span class="fn">text_to_indices</span>(<span class="var">tkns</span>, <span class="var">vocab</span>)
+    <span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">2</span>, <span class="fn">len</span>(<span class="var">indices</span>) + <span class="num">1</span>):
+        <span class="var">training_sequence</span>.<span class="fn">append</span>(<span class="var">indices</span>[:<span class="var">i</span>])
+
+<span class="cm"># Find max length → 62</span>
+<span class="var">len_list</span> = [<span class="fn">len</span>(<span class="var">s</span>) <span class="kw">for</span> <span class="var">s</span> <span class="kw">in</span> <span class="var">training_sequence</span>]
+<span class="var">max_len</span> = <span class="fn">max</span>(<span class="var">len_list</span>)   <span class="cm"># = 62</span>
+
+<span class="cm"># Pad all sequences to max_len</span>
+<span class="var">padded_training_sequence</span> = []
+<span class="kw">for</span> <span class="var">seq</span> <span class="kw">in</span> <span class="var">training_sequence</span>:
+    <span class="var">padded_training_sequence</span>.<span class="fn">append</span>([<span class="num">0</span>] * (<span class="var">max_len</span> - <span class="fn">len</span>(<span class="var">seq</span>)) + <span class="var">seq</span>)
+
+<span class="var">padded_training_sequence</span> = <span class="cls">torch</span>.<span class="fn">tensor</span>(<span class="var">padded_training_sequence</span>, dtype=<span class="cls">torch</span>.<span class="var">long</span>)
+<span class="cm"># Shape: (942, 62)</span></pre>
+            </div>
+
+            <!-- X, Y split -->
+            <div class="card">
+                <div class="card-title"><span class="dot g"></span>Step 4 · Split X and Y</div>
+                <pre><span class="var">X</span> = <span class="var">padded_training_sequence</span>[:, :-<span class="num">1</span>]   <span class="cm"># (942, 61) — all tokens except last</span>
+<span class="var">y</span> = <span class="var">padded_training_sequence</span>[:, -<span class="num">1</span>]    <span class="cm"># (942,)    — last token = target</span></pre>
+                <div class="shape-row" style="margin-top:8px;">
+                    <span class="shape">X: (942, 61)</span>
+                    <span style="color:var(--muted);">→ input sequences</span>
+                    <span class="shape y">Y: (942,)</span>
+                    <span style="color:var(--muted);">→ next word index</span>
+                </div>
+            </div>
+
+            <!-- Dataset -->
+            <div class="card">
+                <div class="card-title"><span class="dot"></span>Step 5 · Custom Dataset & DataLoader</div>
+                <pre><span class="kw">class</span> <span class="cls">CustomDataset</span>(<span class="cls">Dataset</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="var">self</span>, <span class="var">X</span>, <span class="var">y</span>):
+        <span class="var">self</span>.X = <span class="var">X</span>
+        <span class="var">self</span>.y = <span class="var">y</span>
+
+    <span class="kw">def</span> <span class="fn">__len__</span>(<span class="var">self</span>):
+        <span class="kw">return</span> <span class="var">self</span>.X.<span class="var">shape</span>[<span class="num">0</span>]
+
+    <span class="kw">def</span> <span class="fn">__getitem__</span>(<span class="var">self</span>, <span class="var">idx</span>):
+        <span class="kw">return</span> <span class="var">self</span>.X[<span class="var">idx</span>], <span class="var">self</span>.y[<span class="var">idx</span>]
+
+<span class="var">dataset</span>    = <span class="cls">CustomDataset</span>(<span class="var">X</span>, <span class="var">y</span>)
+<span class="var">dataloader</span> = <span class="cls">DataLoader</span>(<span class="var">dataset</span>, batch_size=<span class="num">32</span>, shuffle=<span class="cls">True</span>)</pre>
+            </div>
+        </div>
+
+        <!-- 4. LSTM Architecture -->
+        <div class="section">
+            <div class="section-title">04 · LSTM Architecture</div>
+
+            <div class="card">
+                <div class="card-title"><span class="dot y"></span>Tensor Shape Flow</div>
+                <table>
+                    <tr>
+                        <th>Stage</th>
+                        <th>Tensor Shape</th>
+                        <th>Note</th>
+                    </tr>
+                    <tr>
+                        <td>Input batch</td>
+                        <td><code>(32, 61)</code></td>
+                        <td>32 sequences × 61 token IDs</td>
+                    </tr>
+                    <tr>
+                        <td>After Embedding</td>
+                        <td><code>(32, 61, 100)</code></td>
+                        <td>Each token → 100-dim vector</td>
+                    </tr>
+                    <tr>
+                        <td>LSTM output (all hidden states)</td>
+                        <td><code>(32, 61, 150)</code></td>
+                        <td>Hidden state at each of 61 timesteps</td>
+                    </tr>
+                    <tr>
+                        <td>Final hidden state <code>h_n</code></td>
+                        <td><code>(1, 32, 150)</code></td>
+                        <td>Last LSTM hidden state (t=61)</td>
+                    </tr>
+                    <tr>
+                        <td>After squeeze + Linear</td>
+                        <td><code>(32, 289)</code></td>
+                        <td>Logits over vocab for each sample</td>
+                    </tr>
+                </table>
+                <div class="note" style="margin-top:10px;"><strong>Key insight:</strong> LSTM runs <strong>61
+                        times</strong> (one per token), but we only use the <strong>final hidden state h₆₁</strong> to
+                    predict the next word.</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title"><span class="dot t"></span>LSTMModel Class</div>
+                <pre><span class="kw">class</span> <span class="cls">LSTMModel</span>(<span class="cls">nn.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="var">self</span>, <span class="var">vocab_size</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        <span class="var">self</span>.embedding = <span class="cls">nn</span>.<span class="fn">Embedding</span>(<span class="var">vocab_size</span>, <span class="num">100</span>)
+        <span class="var">self</span>.lstm      = <span class="cls">nn</span>.<span class="fn">LSTM</span>(<span class="num">100</span>, <span class="num">150</span>, batch_first=<span class="cls">True</span>)
+        <span class="var">self</span>.fc        = <span class="cls">nn</span>.<span class="fn">Linear</span>(<span class="num">150</span>, <span class="var">vocab_size</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="var">self</span>, <span class="var">x</span>):
+        <span class="var">embedded</span> = <span class="var">self</span>.<span class="fn">embedding</span>(<span class="var">x</span>)
+        <span class="cm"># embedded: (batch, 61, 100)</span>
+
+        <span class="var">intermediate_hidden_states</span>, (<span class="var">final_hidden_state</span>, <span class="var">final_cell_state</span>) = \
+            <span class="var">self</span>.<span class="fn">lstm</span>(<span class="var">embedded</span>)
+        <span class="cm"># final_hidden_state: (1, batch, 150)</span>
+
+        <span class="var">output</span> = <span class="var">self</span>.<span class="fn">fc</span>(<span class="var">final_hidden_state</span>.<span class="fn">squeeze</span>(<span class="num">0</span>))
+        <span class="cm"># output: (batch, vocab_size)</span>
+        <span class="kw">return</span> <span class="var">output</span></pre>
+
+                <div class="grid-3" style="margin-top:12px;">
+                    <div style="background:var(--tag-bg);border-radius:8px;padding:10px;font-size:12px;">
+                        <div class="label">Embedding</div>
+                        <code>nn.Embedding(289, 100)</code><br>
+                        <span style="color:var(--muted);">vocab_size → 100 dims</span>
+                    </div>
+                    <div style="background:var(--tag-bg);border-radius:8px;padding:10px;font-size:12px;">
+                        <div class="label">LSTM</div>
+                        <code>nn.LSTM(100, 150)</code><br>
+                        <span style="color:var(--muted);">input=100 → hidden=150</span>
+                    </div>
+                    <div style="background:var(--tag-bg);border-radius:8px;padding:10px;font-size:12px;">
+                        <div class="label">Linear</div>
+                        <code>nn.Linear(150, 289)</code><br>
+                        <span style="color:var(--muted);">hidden → vocab logits</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Training -->
+        <div class="section">
+            <div class="section-title">05 · Training</div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title"><span class="dot"></span>Hyperparameters & Setup</div>
+                    <pre><span class="var">model</span>  = <span class="cls">LSTMModel</span>(<span class="fn">len</span>(<span class="var">vocab</span>))  <span class="cm"># vocab=289</span>
+<span class="var">device</span> = <span class="cls">torch</span>.<span class="fn">device</span>(<span class="str">"cuda"</span> <span class="kw">if</span> <span class="cls">torch</span>.cuda.<span class="fn">is_available</span>() <span class="kw">else</span> <span class="str">"cpu"</span>)
+<span class="var">model</span>.<span class="fn">to</span>(<span class="var">device</span>)
+
+<span class="var">epochs</span>        = <span class="num">50</span>
+<span class="var">learning_rate</span> = <span class="num">0.001</span>
+<span class="var">criterion</span>     = <span class="cls">nn</span>.<span class="fn">CrossEntropyLoss</span>()
+<span class="var">optimizer</span>     = <span class="cls">torch</span>.optim.<span class="fn">Adam</span>(<span class="var">model</span>.<span class="fn">parameters</span>(), lr=<span class="var">learning_rate</span>)</pre>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="dot y"></span>Training Loop</div>
+                    <pre><span class="kw">for</span> <span class="var">epoch</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="var">epochs</span>):
+    <span class="var">total_loss</span> = <span class="num">0</span>
+    <span class="kw">for</span> <span class="var">batch_x</span>, <span class="var">batch_y</span> <span class="kw">in</span> <span class="var">dataloader</span>:
+        <span class="var">batch_x</span> = <span class="var">batch_x</span>.<span class="fn">to</span>(<span class="var">device</span>)
+        <span class="var">batch_y</span> = <span class="var">batch_y</span>.<span class="fn">to</span>(<span class="var">device</span>)
+
+        <span class="var">optimizer</span>.<span class="fn">zero_grad</span>()
+        <span class="var">output</span> = <span class="fn">model</span>(<span class="var">batch_x</span>)
+        <span class="var">loss</span>   = <span class="fn">criterion</span>(<span class="var">output</span>, <span class="var">batch_y</span>)
+        <span class="var">loss</span>.<span class="fn">backward</span>()
+        <span class="var">optimizer</span>.<span class="fn">step</span>()
+        <span class="var">total_loss</span> += <span class="var">loss</span>.<span class="fn">item</span>()</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Prediction -->
+        <div class="section">
+            <div class="section-title">06 · Prediction & Inference</div>
+            <div class="card">
+                <div class="card-title"><span class="dot g"></span>prediction() Function</div>
+                <pre><span class="kw">def</span> <span class="fn">prediction</span>(<span class="var">model</span>, <span class="var">vocab</span>, <span class="var">text</span>):
+    <span class="cm"># 1. Tokenize</span>
+    <span class="var">tokenized_text</span>  = <span class="fn">word_tokenize</span>(<span class="var">text</span>.<span class="fn">lower</span>())
+
+    <span class="cm"># 2. Convert to indices</span>
+    <span class="var">numerical_text</span>  = <span class="fn">text_to_indices</span>(<span class="var">tokenized_text</span>, <span class="var">vocab</span>)
+
+    <span class="cm"># 3. Pad to max_len=61, add batch dim</span>
+    <span class="var">padded_text</span> = <span class="cls">torch</span>.<span class="fn">tensor</span>(
+        [<span class="num">0</span>] * (<span class="num">61</span> - <span class="fn">len</span>(<span class="var">numerical_text</span>)) + <span class="var">numerical_text</span>,
+        dtype=<span class="cls">torch</span>.<span class="var">long</span>
+    ).<span class="fn">unsqueeze</span>(<span class="num">0</span>)  <span class="cm"># shape: (1, 61)</span>
+
+    <span class="cm"># 4. Forward pass</span>
+    <span class="var">output</span> = <span class="fn">model</span>(<span class="var">padded_text</span>)   <span class="cm"># (1, 289)</span>
+
+    <span class="cm"># 5. Get predicted word index</span>
+    <span class="var">value</span>, <span class="var">index</span> = <span class="cls">torch</span>.<span class="fn">max</span>(<span class="var">output</span>, dim=<span class="num">1</span>)
+
+    <span class="cm"># 6. Return text + predicted word</span>
+    <span class="kw">return</span> <span class="var">text</span> + <span class="str">" "</span> + <span class="fn">list</span>(<span class="var">vocab</span>.<span class="fn">keys</span>())[<span class="var">index</span>]</pre>
+
+                <div class="note" style="margin-top:10px;">
+                    <strong>Example:</strong><br>
+                    <code>prediction(model, vocab, "The course follows")</code> → <strong>'The course follows
+                        a'</strong><br>
+                    <code>prediction(model, vocab, "The course follows a monthly")</code> → <strong>'The course follows
+                        a monthly subscription'</strong>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title"><span class="dot p"></span>Autoregressive Generation Loop</div>
+                <pre><span class="kw">import</span> <span class="var">time</span>
+
+<span class="var">num_tokens</span>  = <span class="num">10</span>
+<span class="var">input_text</span>  = <span class="str">"You can check the"</span>
+
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="var">num_tokens</span>):
+    <span class="var">output_text</span> = <span class="fn">prediction</span>(<span class="var">model</span>, <span class="var">vocab</span>, <span class="var">input_text</span>)
+    <span class="fn">print</span>(<span class="var">output_text</span>)
+    <span class="var">input_text</span>  = <span class="var">output_text</span>
+    <span class="var">time</span>.<span class="fn">sleep</span>(<span class="num">0.5</span>)</pre>
+
+                <div class="note" style="margin-top:8px;">
+                    <strong>Output:</strong><br>
+                    You can check the detailed<br>
+                    You can check the detailed syllabus<br>
+                    You can check the detailed syllabus here<br>
+                    You can check the detailed syllabus here - https://...
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Quick Reference -->
+        <div class="section">
+            <div class="section-title">07 · Quick Reference</div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title"><span class="dot"></span>Key Numbers</div>
+                    <table>
+                        <tr>
+                            <th>Quantity</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Vocab size</td>
+                            <td><code>289</code></td>
+                        </tr>
+                        <tr>
+                            <td>Embedding dim</td>
+                            <td><code>100</code></td>
+                        </tr>
+                        <tr>
+                            <td>LSTM hidden size</td>
+                            <td><code>150</code></td>
+                        </tr>
+                        <tr>
+                            <td>Max sequence length</td>
+                            <td><code>62</code> (X = 61)</td>
+                        </tr>
+                        <tr>
+                            <td>Training sequences</td>
+                            <td><code>942</code></td>
+                        </tr>
+                        <tr>
+                            <td>Batch size</td>
+                            <td><code>32</code></td>
+                        </tr>
+                        <tr>
+                            <td>Epochs</td>
+                            <td><code>50</code></td>
+                        </tr>
+                        <tr>
+                            <td>Learning rate</td>
+                            <td><code>0.001</code></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="dot y"></span>Pipeline Summary</div>
+                    <div class="flow" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <div class="flow-step">📄 Raw Text Document</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">🔤 Tokenize (NLTK word_tokenize)</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">📚 Build Vocab (Counter → dict)</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">🔢 N-gram Sequences (942 samples)</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">🔲 Pad to max_len=62 → Tensor</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">📦 Dataset → DataLoader (batch=32)</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">🧠 LSTMModel: Embed → LSTM → FC</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">🎯 CrossEntropyLoss + Adam (50 epochs)</div>
+                        <div class="flow-arrow" style="padding-left:10px;">↓</div>
+                        <div class="flow-step">💬 Predict Next Word (autoregressive)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>
